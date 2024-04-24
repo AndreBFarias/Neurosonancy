@@ -1,0 +1,73 @@
+# Neurosonancy - Gitignore
+
+# Ambientes Virtuais
+venv/
+venv_chatterbox/
+venv_coqui/
+venv_tts/
+.venv/
+env/
+
+# Arquivos de ambiente
+.env
+
+# Pastas de Dados (contém dados do usuario)
+data_input/
+data_output/
+samples/
+datasets/
+models/
+trained_models/
+
+# Documentacao interna (logs e dev)
+docs/logs/
+docs/dev/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Build/Dist
+build/
+dist/
+*.egg-info/
+*.egg
+
+# IDE/Config
+.vscode/
+.idea/
+*.sublime-*
+.gemini/
+.claude/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs de execucao
+*.log
+
+# Documentos internos privados
+IMPORTANT.MD
+CLAUDE.md
+
+# Symlink (aponta para docs/logs)
+logs
+
+# Checkpoints de treinamento
+*.pt
+*.pth
+*.ckpt
+checkpoint*/
+
+# Modelos baixados (grandes demais para git)
+*.bin
+*.safetensors
+
+# Codigo deprecated
+src/modules/clone_voice/core/_deprecated/
