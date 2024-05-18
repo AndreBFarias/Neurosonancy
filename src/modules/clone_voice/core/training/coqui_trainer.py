@@ -37,9 +37,9 @@ class CoquiTrainer(TrainerBase):
             self._log("Diretorio wavs/ nao encontrado")
             return False
 
-        wav_files = list(wavs_dir.glob("*.wav"))
-        if len(wav_files) < self.MIN_SAMPLES:
-            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(wav_files)}")
+        audio_files = list(wavs_dir.glob("*.wav")) + list(wavs_dir.glob("*.mp3"))
+        if len(audio_files) < self.MIN_SAMPLES:
+            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}")
             return False
 
         metadata_csv = dataset_dir / "metadata.csv"
@@ -47,7 +47,7 @@ class CoquiTrainer(TrainerBase):
             self._log("Arquivo metadata.csv nao encontrado ou vazio")
             return False
 
-        self._log(f"Dataset validado: {len(wav_files)} amostras")
+        self._log(f"Dataset validado: {len(audio_files)} amostras")
         return True
 
     def initialize(self) -> bool:
@@ -196,7 +196,7 @@ class CoquiTrainer(TrainerBase):
             process.wait()
 
             if process.returncode == 0:
-                final_path = self.config.output_dir / f"{self.config.model_name}_xtts_finetuned"
+                final_path = self.config.output_dir / f"{self.config.model_name}_coqui"
                 final_path.mkdir(parents=True, exist_ok=True)
                 self.stats.output_path = final_path
                 self._create_inference_script(final_path)
@@ -223,11 +223,22 @@ from pathlib import Path
 TRAINING_DIR = Path("{training_dir}")
 CHECKPOINT_DIR = Path("{checkpoint_dir}")
 OUTPUT_DIR = Path("{self.config.output_dir}")
+UNIFIED_REFERENCE = Path("{self.config.unified_reference_path}") if "{self.config.unified_reference_path}" else None
 EPOCHS = {self.config.epochs}
 BATCH_SIZE = {self.config.batch_size}
 LEARNING_RATE = {self.config.learning_rate}
 GRAD_ACCUM_STEPS = {self.config.gradient_accumulation_steps}
 MAX_AUDIO_LENGTH = {self.config.max_audio_length_seconds}
+
+def convert_mp3_to_wav(mp3_path: Path) -> Path:
+    """Converte MP3 para WAV usando pydub"""
+    from pydub import AudioSegment
+    wav_path = mp3_path.with_suffix('.wav')
+    if not wav_path.exists():
+        audio = AudioSegment.from_mp3(str(mp3_path))
+        audio = audio.set_frame_rate(22050).set_channels(1)
+        audio.export(str(wav_path), format='wav')
+    return wav_path
 
 def prepare_dataset():
     """Prepara dataset no formato esperado pelo XTTS"""
@@ -239,7 +250,11 @@ def prepare_dataset():
         for line in f:
             parts = line.strip().split('|')
             if len(parts) >= 2:
-                audio_file = wavs_dir / f"{{parts[0]}}.wav"
+                audio_file = wavs_dir / f"{{parts[0]}}.mp3"
+                if audio_file.exists():
+                    audio_file = convert_mp3_to_wav(audio_file)
+                else:
+                    audio_file = wavs_dir / f"{{parts[0]}}.wav"
                 text = parts[1]
                 if audio_file.exists():
                     samples.append({{
@@ -268,22 +283,14 @@ def main():
         sys.exit(1)
 
     try:
-        from TTS.tts.configs.xtts_config import XttsConfig
-        from TTS.tts.models.xtts import Xtts
-        from TTS.utils.manage import ModelManager
+        from TTS.api import TTS
 
         print("Baixando modelo XTTS base...")
-        model_manager = ModelManager()
-        model_path, config_path, _ = model_manager.download_model("tts_models/multilingual/multi-dataset/xtts_v2")
-
-        print("Carregando configuracao...")
-        config = XttsConfig()
-        config.load_json(config_path)
-
-        print("Carregando modelo base...")
-        model = Xtts.init_from_config(config)
-        model.load_checkpoint(config, checkpoint_dir=str(Path(model_path).parent), eval=False)
+        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+        model = tts.synthesizer.tts_model
         model = model.to(device)
+
+        print("Modelo carregado!")
 
         # Configurar para fine-tuning
         model.train()
@@ -374,18 +381,21 @@ def main():
                 print(f"Checkpoint salvo: {{ckpt_path.name}}")
 
         # Salvar modelo final
-        final_dir = OUTPUT_DIR / "{self.config.model_name}_xtts_finetuned"
+        final_dir = OUTPUT_DIR / "{self.config.model_name}_coqui"
         final_dir.mkdir(parents=True, exist_ok=True)
 
         torch.save({{
             'model_state_dict': model.state_dict(),
-            'config': config,
             'samples_used': len(samples),
             'epochs': EPOCHS,
         }}, final_dir / "model_final.pt")
 
-        # Copiar um audio de referencia para inferencia
-        if samples:
+        # Usar audio unificado como referencia (se disponivel)
+        if UNIFIED_REFERENCE and UNIFIED_REFERENCE.exists():
+            import shutil
+            shutil.copy(UNIFIED_REFERENCE, final_dir / "reference_speaker.wav")
+            print(f"Usando audio unificado: {{UNIFIED_REFERENCE.name}}")
+        elif samples:
             import shutil
             ref_audio = Path(samples[0]["audio_file"])
             shutil.copy(ref_audio, final_dir / "reference_speaker.wav")

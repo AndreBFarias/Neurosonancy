@@ -50,9 +50,9 @@ class ChatterboxTrainer(TrainerBase):
             self._log("Diretorio wavs/ nao encontrado")
             return False
 
-        wav_files = list(wavs_dir.glob("*.wav"))
-        if len(wav_files) < self.MIN_SAMPLES:
-            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(wav_files)}")
+        audio_files = list(wavs_dir.glob("*.wav")) + list(wavs_dir.glob("*.mp3"))
+        if len(audio_files) < self.MIN_SAMPLES:
+            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}")
             return False
 
         jsonl_file = dataset_dir / "chatterbox_data.jsonl"
@@ -60,7 +60,7 @@ class ChatterboxTrainer(TrainerBase):
             self._log("Arquivo chatterbox_data.jsonl nao encontrado ou vazio")
             return False
 
-        self._log(f"Dataset validado: {len(wav_files)} amostras")
+        self._log(f"Dataset validado: {len(audio_files)} amostras")
         return True
 
     def initialize(self) -> bool:
@@ -216,15 +216,16 @@ class ChatterboxTrainer(TrainerBase):
             raise
 
     def _create_training_script(self, training_dir: Path, output_dir: Path) -> Path:
+        unified_ref = self.config.unified_reference_path
+        unified_ref_str = str(unified_ref) if unified_ref else ""
+
         script_content = f'''# -*- coding: utf-8 -*-
 """
 Script de preparacao de embeddings Chatterbox
 Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 
-NOTA: Chatterbox e um modelo zero-shot. Este script:
-1. Carrega os audios de referencia
-2. Extrai speaker embeddings
-3. Salva para uso otimizado na inferencia
+Chatterbox e um modelo zero-shot. Este script extrai embeddings
+de um arquivo de referencia unificado para clonagem de voz.
 """
 
 import os
@@ -234,45 +235,19 @@ import torch
 import shutil
 from pathlib import Path
 
-TRAINING_DIR = Path("{training_dir}")
 OUTPUT_DIR = Path("{output_dir}")
-MAX_REFERENCE_FILES = 10
-
-def load_samples():
-    """Carrega amostras do dataset"""
-    jsonl_path = TRAINING_DIR / "metadata.jsonl"
-    wavs_dir = TRAINING_DIR / "wavs"
-
-    samples = []
-    with open(jsonl_path, 'r', encoding='utf-8') as f:
-        for line in f:
-            if line.strip():
-                data = json.loads(line)
-                audio_path = wavs_dir / Path(data["audio_path"]).name
-                if audio_path.exists():
-                    samples.append({{
-                        "audio_path": str(audio_path),
-                        "text": data.get("text", "")
-                    }})
-
-    return samples
+UNIFIED_REFERENCE = Path("{unified_ref_str}") if "{unified_ref_str}" else None
 
 def main():
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Dispositivo: {{device}}")
 
-    # Carregar samples
-    print("Carregando amostras...")
-    samples = load_samples()
-    print(f"Amostras encontradas: {{len(samples)}}")
-
-    if len(samples) < 3:
-        print("ERRO: Minimo de 3 amostras necessario")
+    if not UNIFIED_REFERENCE or not UNIFIED_REFERENCE.exists():
+        print("ERRO: Audio de referencia unificado nao encontrado")
+        print(f"Esperado: {{UNIFIED_REFERENCE}}")
         sys.exit(1)
 
-    # Limitar a 10 melhores (ou todas se menos)
-    samples = samples[:MAX_REFERENCE_FILES]
-    print(f"Usando {{len(samples)}} amostras de referencia")
+    print(f"Audio de referencia: {{UNIFIED_REFERENCE.name}}")
 
     try:
         from chatterbox.tts import ChatterboxTTS
@@ -281,95 +256,67 @@ def main():
         model = ChatterboxTTS.from_pretrained(device=device)
         print("Modelo carregado!")
 
-        # Criar diretorio de saida
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        ref_dir = OUTPUT_DIR / "reference_audios"
-        ref_dir.mkdir(exist_ok=True)
 
-        # Processar cada audio e extrair embeddings
-        embeddings_data = []
+        print("PROGRESS:1:3")
+        print("Copiando audio de referencia...")
+        ref_path = OUTPUT_DIR / "reference.wav"
+        shutil.copy(UNIFIED_REFERENCE, ref_path)
 
-        for i, sample in enumerate(samples):
-            print(f"PROGRESS:{{i+1}}:{{len(samples)}}")
-            print(f"Processando: {{Path(sample['audio_path']).name}}")
+        print("PROGRESS:2:3")
+        print("Extraindo embeddings do audio unificado...")
 
-            try:
-                # Preparar conditionals para este audio
-                audio_path = sample["audio_path"]
+        conds = model.prepare_conditionals(
+            wav_fpath=str(ref_path),
+            exaggeration=0.5
+        )
 
-                # Copiar audio de referencia
-                ref_audio_path = ref_dir / f"ref_{{i:02d}}.wav"
-                shutil.copy(audio_path, ref_audio_path)
+        embedding_path = OUTPUT_DIR / "speaker_embedding.pt"
+        torch.save({{
+            "conditionals": conds,
+            "source_audio": str(ref_path),
+            "model": "chatterbox",
+        }}, embedding_path)
 
-                # Extrair embeddings
-                conds = model.prepare_conditionals(
-                    audio_path=str(audio_path),
-                    max_ref_s=15.0
-                )
+        print(f"Embedding salvo: {{embedding_path.name}}")
 
-                # Salvar embeddings
-                embedding_path = OUTPUT_DIR / f"embedding_{{i:02d}}.pt"
-                torch.save({{
-                    "enc_conds": conds[0] if isinstance(conds, tuple) else conds,
-                    "dec_conds": conds[1] if isinstance(conds, tuple) and len(conds) > 1 else None,
-                    "source_audio": str(ref_audio_path),
-                    "text": sample.get("text", ""),
-                }}, embedding_path)
-
-                embeddings_data.append({{
-                    "index": i,
-                    "audio_file": str(ref_audio_path.name),
-                    "embedding_file": str(embedding_path.name),
-                    "text": sample.get("text", "")
-                }})
-
-                print(f"  Embedding salvo: {{embedding_path.name}}")
-
-            except Exception as e:
-                print(f"  ERRO ao processar {{sample['audio_path']}}: {{e}}")
-                continue
-
-        # Salvar metadata
         metadata = {{
             "model": "chatterbox",
             "created_at": "{datetime.now().isoformat()}",
             "device": device,
-            "total_embeddings": len(embeddings_data),
-            "embeddings": embeddings_data,
+            "reference_audio": str(ref_path.name),
+            "embedding_file": str(embedding_path.name),
         }}
 
-        metadata_path = OUTPUT_DIR / "embeddings_metadata.json"
+        metadata_path = OUTPUT_DIR / "model_metadata.json"
         with open(metadata_path, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
 
+        print("PROGRESS:3:3")
+        print("Testando geracao de voz...")
+        test_text = "Este e um teste de voz clonada com o audio de referencia unificado."
+
+        try:
+            test_audio = model.generate(
+                text=test_text,
+                audio_prompt_path=str(ref_path),
+            )
+
+            test_output = OUTPUT_DIR / "test_output.wav"
+            import torchaudio
+            torchaudio.save(str(test_output), test_audio.squeeze(0).cpu(), 24000)
+            print(f"Teste salvo: {{test_output}}")
+
+        except Exception as e:
+            print(f"Aviso no teste: {{e}}")
+
         print("")
         print("=" * 50)
-        print(f"Embeddings preparados: {{len(embeddings_data)}}")
+        print("EMBEDDING EXTRAIDO COM SUCESSO")
         print(f"Diretorio: {{OUTPUT_DIR}}")
+        print(f"Referencia: {{ref_path.name}}")
+        print(f"Embedding: {{embedding_path.name}}")
         print("=" * 50)
-
-        # Testar geracao com primeiro embedding
-        if embeddings_data:
-            print("")
-            print("Testando geracao com primeiro embedding...")
-            test_text = "Este e um teste de voz clonada."
-
-            try:
-                test_audio = model.generate(
-                    text=test_text,
-                    audio_path=str(ref_dir / embeddings_data[0]["audio_file"]),
-                )
-
-                test_output = OUTPUT_DIR / "test_output.wav"
-                import torchaudio
-                torchaudio.save(str(test_output), test_audio.squeeze(0).cpu(), 24000)
-                print(f"Teste salvo: {{test_output}}")
-
-            except Exception as e:
-                print(f"Erro no teste: {{e}}")
-
-        print("")
-        print("Preparacao concluida!")
 
     except ImportError as e:
         print(f"ERRO: Dependencia nao encontrada: {{e}}")
@@ -391,11 +338,10 @@ if __name__ == "__main__":
     def _create_inference_script(self, output_dir: Path) -> None:
         script_content = f'''# -*- coding: utf-8 -*-
 """
-Script de inferencia para Chatterbox com embeddings preparados
+Script de inferencia para Chatterbox com voz clonada
 Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """
 
-import json
 import torch
 import torchaudio
 from pathlib import Path
@@ -403,31 +349,17 @@ from chatterbox.tts import ChatterboxTTS
 
 MODEL_DIR = Path(__file__).parent
 OUTPUT_DIR = MODEL_DIR / "outputs"
-REF_DIR = MODEL_DIR / "reference_audios"
-METADATA_PATH = MODEL_DIR / "embeddings_metadata.json"
+REFERENCE_AUDIO = MODEL_DIR / "reference.wav"
 
 
 def load_model(device: str = None):
-    """Carrega o modelo Chatterbox"""
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
     return ChatterboxTTS.from_pretrained(device=device)
 
 
-def get_reference_audios():
-    """Lista audios de referencia disponiveis"""
-    if not METADATA_PATH.exists():
-        return []
-
-    with open(METADATA_PATH, 'r') as f:
-        metadata = json.load(f)
-
-    return metadata.get("embeddings", [])
-
-
 def generate_speech(
     text: str,
-    reference_index: int = 0,
     output_file: str = "output.wav",
     exaggeration: float = 0.5,
     cfg_weight: float = 0.5,
@@ -437,7 +369,6 @@ def generate_speech(
 
     Args:
         text: Texto para sintetizar
-        reference_index: Indice do audio de referencia (0-9)
         output_file: Nome do arquivo de saida
         exaggeration: Nivel de expressividade (0.0-1.0)
         cfg_weight: Peso do classifier-free guidance (0.0-1.0)
@@ -445,80 +376,38 @@ def generate_speech(
     Returns:
         Path do arquivo de audio gerado
     """
+    if not REFERENCE_AUDIO.exists():
+        raise ValueError(f"Audio de referencia nao encontrado: {{REFERENCE_AUDIO}}")
+
     OUTPUT_DIR.mkdir(exist_ok=True)
     output_path = OUTPUT_DIR / output_file
 
-    # Carregar metadata
-    refs = get_reference_audios()
-    if not refs:
-        raise ValueError("Nenhum audio de referencia encontrado")
-
-    if reference_index >= len(refs):
-        reference_index = 0
-
-    ref_audio = REF_DIR / refs[reference_index]["audio_file"]
-
-    # Carregar modelo
     model = load_model()
 
-    # Gerar audio
     audio = model.generate(
         text=text,
-        audio_path=str(ref_audio),
+        audio_prompt_path=str(REFERENCE_AUDIO),
         exaggeration=exaggeration,
         cfg_weight=cfg_weight,
     )
 
-    # Salvar
     torchaudio.save(str(output_path), audio.squeeze(0).cpu(), 24000)
 
     return output_path
-
-
-def generate_with_all_references(
-    text: str,
-    output_prefix: str = "output"
-) -> list:
-    """
-    Gera audio com todos os audios de referencia.
-    Util para comparar qual referencia produz melhor resultado.
-    """
-    OUTPUT_DIR.mkdir(exist_ok=True)
-    refs = get_reference_audios()
-    model = load_model()
-
-    outputs = []
-    for i, ref in enumerate(refs):
-        ref_audio = REF_DIR / ref["audio_file"]
-        output_path = OUTPUT_DIR / f"{{output_prefix}}_ref{{i:02d}}.wav"
-
-        audio = model.generate(
-            text=text,
-            audio_path=str(ref_audio),
-        )
-
-        torchaudio.save(str(output_path), audio.squeeze(0).cpu(), 24000)
-        outputs.append(output_path)
-        print(f"Gerado: {{output_path.name}}")
-
-    return outputs
 
 
 if __name__ == "__main__":
     import sys
 
     if len(sys.argv) < 2:
-        print("Uso: python inference.py <texto> [ref_index]")
+        print("Uso: python inference.py <texto>")
         print("")
-        print("Referencias disponiveis:")
-        for i, ref in enumerate(get_reference_audios()):
-            print(f"  [{{i}}] {{ref['audio_file']}}")
+        print("Exemplo:")
+        print("  python inference.py 'Ola, como voce esta?'")
         sys.exit(1)
 
     text = sys.argv[1]
-    ref_index = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-
-    result = generate_speech(text, reference_index=ref_index)
+    result = generate_speech(text)
     print(f"Audio gerado: {{result}}")
 '''
 

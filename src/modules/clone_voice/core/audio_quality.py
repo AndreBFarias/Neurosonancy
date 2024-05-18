@@ -80,29 +80,29 @@ class AudioQualityAnalyzer:
             result.errors.append("Diretorio wavs/ nao encontrado")
             return result
 
-        wav_files = sorted(wavs_dir.glob("*.wav"))
-        result.total_files = len(wav_files)
+        audio_files = sorted(list(wavs_dir.glob("*.mp3")) + list(wavs_dir.glob("*.wav")))
+        result.total_files = len(audio_files)
 
         if result.total_files == 0:
-            result.errors.append("Nenhum arquivo WAV encontrado")
+            result.errors.append("Nenhum arquivo de audio encontrado")
             return result
 
         self.metrics.clear()
 
-        for i, wav_path in enumerate(wav_files):
+        for i, audio_path in enumerate(audio_files):
             if self._on_progress:
-                self._on_progress(i + 1, result.total_files, wav_path.name)
+                self._on_progress(i + 1, result.total_files, audio_path.name)
 
             try:
-                metrics = self._analyze_file(wav_path, transcripts_dir)
+                metrics = self._analyze_file(audio_path, transcripts_dir)
                 if metrics:
                     self.metrics.append(metrics)
                     result.analyzed_files += 1
                     result.total_duration_seconds += metrics.duration_seconds
             except Exception as e:
                 result.failed_files += 1
-                result.errors.append(f"{wav_path.name}: {e}")
-                logger.warning(f"Erro ao analisar {wav_path.name}: {e}")
+                result.errors.append(f"{audio_path.name}: {e}")
+                logger.warning(f"Erro ao analisar {audio_path.name}: {e}")
 
         if result.analyzed_files > 0:
             result.avg_duration_seconds = result.total_duration_seconds / result.analyzed_files
@@ -114,18 +114,22 @@ class AudioQualityAnalyzer:
 
         return result
 
-    def _analyze_file(self, wav_path: Path, transcripts_dir: Path) -> Optional[AudioMetrics]:
+    def _analyze_file(self, audio_path: Path, transcripts_dir: Path) -> Optional[AudioMetrics]:
         try:
-            with wave.open(str(wav_path), 'rb') as wav:
-                channels = wav.getnchannels()
-                sample_rate = wav.getframerate()
-                bit_depth = wav.getsampwidth() * 8
-                n_frames = wav.getnframes()
-                duration = n_frames / sample_rate
+            from pydub import AudioSegment
 
-                raw_data = wav.readframes(n_frames)
+            if audio_path.suffix.lower() == '.mp3':
+                audio = AudioSegment.from_mp3(str(audio_path))
+            else:
+                audio = AudioSegment.from_wav(str(audio_path))
 
-            file_size_kb = wav_path.stat().st_size / 1024
+            channels = audio.channels
+            sample_rate = audio.frame_rate
+            bit_depth = audio.sample_width * 8
+            duration = len(audio) / 1000.0
+
+            raw_data = audio.raw_data
+            file_size_kb = audio_path.stat().st_size / 1024
 
             rms_level, peak_level, silence_ratio = self._calculate_levels(
                 raw_data, bit_depth, channels
@@ -133,14 +137,14 @@ class AudioQualityAnalyzer:
 
             transcript = ""
             char_count = 0
-            transcript_path = transcripts_dir / f"{wav_path.stem}.txt"
+            transcript_path = transcripts_dir / f"{audio_path.stem}.txt"
             if transcript_path.exists():
                 transcript = transcript_path.read_text(encoding='utf-8').strip()
                 char_count = len(transcript)
 
             return AudioMetrics(
-                file_path=wav_path,
-                file_name=wav_path.name,
+                file_path=audio_path,
+                file_name=audio_path.name,
                 duration_seconds=duration,
                 sample_rate=sample_rate,
                 channels=channels,
@@ -154,7 +158,7 @@ class AudioQualityAnalyzer:
             )
 
         except Exception as e:
-            logger.error(f"Erro ao analisar {wav_path}: {e}")
+            logger.error(f"Erro ao analisar {audio_path}: {e}")
             return None
 
     def _calculate_levels(
@@ -294,7 +298,7 @@ class AudioQualityAnalyzer:
             csv_path = output_path / "metadata.csv"
             with open(csv_path, 'w', encoding='utf-8') as f:
                 for m in selection:
-                    audio_name = m.file_name.replace('.wav', '')
+                    audio_name = m.file_name.replace('.mp3', '').replace('.wav', '')
                     phrase_clean = m.transcript.replace('|', ' ').replace('\n', ' ')
                     f.write(f"{audio_name}|{phrase_clean}|{phrase_clean}\n")
             result["coqui_csv"] = csv_path
@@ -317,6 +321,53 @@ class AudioQualityAnalyzer:
         result["file_list"] = file_list_path
 
         return result
+
+    def create_unified_reference(
+        self,
+        selection: List[AudioMetrics],
+        output_path: Path,
+        silence_between_ms: int = 500,
+        target_sample_rate: int = 22050,
+    ) -> Optional[Path]:
+        if not selection:
+            return None
+
+        try:
+            from pydub import AudioSegment
+
+            combined = AudioSegment.empty()
+            silence = AudioSegment.silent(duration=silence_between_ms)
+
+            for i, m in enumerate(selection):
+                if m.file_path.suffix.lower() == '.mp3':
+                    audio = AudioSegment.from_mp3(str(m.file_path))
+                else:
+                    audio = AudioSegment.from_wav(str(m.file_path))
+
+                audio = audio.set_frame_rate(target_sample_rate)
+                audio = audio.set_channels(1)
+
+                if i > 0:
+                    combined += silence
+                combined += audio
+
+            output_path.mkdir(parents=True, exist_ok=True)
+            unified_path = output_path / "unified_reference.wav"
+
+            combined.export(
+                str(unified_path),
+                format="wav",
+                parameters=["-ar", str(target_sample_rate), "-ac", "1"]
+            )
+
+            total_duration = len(combined) / 1000.0
+            logger.info(f"Audio unificado criado: {unified_path.name} ({total_duration:.1f}s)")
+
+            return unified_path
+
+        except Exception as e:
+            logger.error(f"Erro ao criar audio unificado: {e}")
+            return None
 
 
 def analyze_and_select_best(

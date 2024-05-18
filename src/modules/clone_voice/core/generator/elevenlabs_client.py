@@ -136,23 +136,24 @@ class ElevenLabsClient:
                     style=self.voice_settings.style,
                     use_speaker_boost=self.voice_settings.use_speaker_boost,
                 ),
-                output_format="pcm_44100",
+                output_format="mp3_44100_128",
             )
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             audio_data = b"".join(audio_generator)
 
-            wav_path = output_path.with_suffix(".wav")
-            self._save_as_wav(audio_data, wav_path, sample_rate=44100)
+            mp3_path = output_path.with_suffix(".mp3")
+            with open(mp3_path, 'wb') as f:
+                f.write(audio_data)
 
             duration_ms = int((time.time() - start_time) * 1000)
 
-            logger.info(f"Audio gerado: {wav_path.name} ({duration_ms}ms)")
+            logger.info(f"Audio gerado: {mp3_path.name} ({duration_ms}ms)")
 
             return GenerationResult(
                 success=True,
-                audio_path=wav_path,
+                audio_path=mp3_path,
                 phrase=text,
                 duration_ms=duration_ms,
                 characters_used=len(text),
@@ -235,7 +236,7 @@ class ElevenLabsClient:
                 return {}
 
         try:
-            info = self._client.user.get_subscription()
+            info = self._client.user.subscription.get()
             return {
                 "tier": info.tier,
                 "character_count": info.character_count,
@@ -248,14 +249,18 @@ class ElevenLabsClient:
 
     def validate_api_key(self) -> bool:
         if not self.api_key:
+            logger.error("API key vazia")
             return False
 
         try:
             if not self._is_initialized:
                 if not self.initialize():
+                    logger.error("Falha ao inicializar cliente")
                     return False
 
-            self._client.user.get_subscription()
+            info = self._client.user.subscription.get()
+            logger.info(f"API valida - Tier: {info.tier}, Chars: {info.character_count}/{info.character_limit}")
             return True
-        except Exception:
+        except Exception as e:
+            logger.error(f"Erro na validacao: {type(e).__name__}: {e}")
             return False
