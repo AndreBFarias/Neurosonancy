@@ -68,40 +68,43 @@ echo ""
 echo "[FASE 1/4] Ambiente Principal"
 echo "============================================"
 if check_venv "$VENV_MAIN" "import textual; import elevenlabs"; then
-    echo "[OK] venv/ ja instalado e funcional. Pulando..."
+    echo "[OK] venv/ ja existe. Atualizando dependencias..."
 else
     echo "[INFO] Instalando venv (principal)..."
     [ -d "$VENV_MAIN" ] && rm -rf "$VENV_MAIN"
-    install_venv "$VENV_MAIN" "venv (principal)" "$SCRIPT_DIR/requirements.txt"
+    python3 -m venv "$VENV_MAIN"
 fi
+echo "  -> Instalando requirements.txt..."
+"$VENV_MAIN/bin/pip" install -r "$SCRIPT_DIR/requirements.txt" --quiet
+echo "  -> venv principal instalado!"
 
 echo ""
 echo "[FASE 2/4] Ambiente Chatterbox TTS"
 echo "============================================"
 if check_venv "$VENV_CHATTERBOX" "from chatterbox.tts import ChatterboxTTS"; then
-    echo "[OK] venv_chatterbox/ ja instalado e funcional. Pulando..."
+    echo "[OK] venv_chatterbox/ ja existe. Atualizando dependencias..."
 else
     echo "[INFO] Instalando venv_chatterbox..."
     [ -d "$VENV_CHATTERBOX" ] && rm -rf "$VENV_CHATTERBOX"
     install_venv "$VENV_CHATTERBOX" "venv_chatterbox" ""
-    echo "  -> Instalando Chatterbox TTS + PyTorch..."
-    "$VENV_CHATTERBOX/bin/pip" install chatterbox-tts torch torchaudio peft --quiet
-    echo "  -> Chatterbox TTS instalado!"
 fi
+echo "  -> Instalando Chatterbox TTS + PyTorch + peft..."
+"$VENV_CHATTERBOX/bin/pip" install chatterbox-tts torch torchaudio peft --quiet
+echo "  -> Chatterbox TTS instalado!"
 
 echo ""
 echo "[FASE 3/4] Ambiente Coqui TTS"
 echo "============================================"
 if check_venv "$VENV_COQUI" "from TTS.api import TTS"; then
-    echo "[OK] venv_coqui/ ja instalado e funcional. Pulando..."
+    echo "[OK] venv_coqui/ ja existe. Atualizando dependencias..."
 else
     echo "[INFO] Instalando venv_coqui..."
     [ -d "$VENV_COQUI" ] && rm -rf "$VENV_COQUI"
     install_venv "$VENV_COQUI" "venv_coqui" ""
-    echo "  -> Instalando Coqui TTS + PyTorch..."
-    "$VENV_COQUI/bin/pip" install coqui-tts torch torchaudio pydub torchcodec --quiet
-    echo "  -> Coqui TTS instalado!"
 fi
+echo "  -> Instalando Coqui TTS + PyTorch + extras..."
+"$VENV_COQUI/bin/pip" install coqui-tts torch torchaudio pydub torchcodec --quiet
+echo "  -> Coqui TTS instalado!"
 
 mkdir -p "$SCRIPT_DIR/logs"
 mkdir -p "$SCRIPT_DIR/data_input"
