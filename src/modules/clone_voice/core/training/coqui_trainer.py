@@ -330,7 +330,7 @@ def main():
                         # Carregar audio de referencia
                         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(
                             audio_path=sample["audio_file"],
-                            max_ref_length=MAX_AUDIO_LENGTH
+                            max_ref_length=int(MAX_AUDIO_LENGTH)
                         )
 
                         # Forward pass com teacher forcing (simplificado)
