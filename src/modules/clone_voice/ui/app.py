@@ -1532,7 +1532,12 @@ from chatterbox.tts import ChatterboxTTS
 
 model = ChatterboxTTS.from_pretrained(device="cuda" if torch.cuda.is_available() else "cpu")
 audio = model.generate(text="{text}", audio_prompt_path="{reference_audio}")
-torchaudio.save("{output_file}", audio.squeeze(0).cpu(), 24000)
+audio_cpu = audio.cpu()
+if audio_cpu.dim() == 3:
+    audio_cpu = audio_cpu.squeeze(0)
+if audio_cpu.dim() == 1:
+    audio_cpu = audio_cpu.unsqueeze(0)
+torchaudio.save("{output_file}", audio_cpu, 24000)
 print("OK")
 '''
         result = subprocess.run(
