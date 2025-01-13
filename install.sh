@@ -79,18 +79,18 @@ echo "  -> Instalando requirements.txt..."
 echo "  -> venv principal instalado!"
 
 echo ""
-echo "[FASE 2/4] Ambiente Chatterbox TTS"
+echo "[FASE 2/4] Ambiente Chatterbox TTS (Multilingual)"
 echo "============================================"
-if check_venv "$VENV_CHATTERBOX" "from chatterbox.tts import ChatterboxTTS"; then
+if check_venv "$VENV_CHATTERBOX" "from chatterbox.mtl_tts import ChatterboxMultilingualTTS"; then
     echo "[OK] venv_chatterbox/ ja existe. Atualizando dependencias..."
 else
     echo "[INFO] Instalando venv_chatterbox..."
     [ -d "$VENV_CHATTERBOX" ] && rm -rf "$VENV_CHATTERBOX"
     install_venv "$VENV_CHATTERBOX" "venv_chatterbox" ""
 fi
-echo "  -> Instalando Chatterbox TTS + PyTorch + peft..."
+echo "  -> Instalando Chatterbox TTS Multilingual + PyTorch + peft..."
 "$VENV_CHATTERBOX/bin/pip" install chatterbox-tts torch torchaudio peft --quiet
-echo "  -> Chatterbox TTS instalado!"
+echo "  -> Chatterbox TTS Multilingual instalado!"
 
 echo ""
 echo "[FASE 3/4] Ambiente Coqui TTS"
