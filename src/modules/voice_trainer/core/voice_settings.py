@@ -17,7 +17,7 @@ class VoiceSettings:
     style: float = 0.0
     use_speaker_boost: bool = True
     description: str = ""
-    
+
     def to_dict(self) -> Dict:
         return {
             "stability": self.stability,
@@ -121,13 +121,13 @@ ARCHETYPE_KEYWORDS = {
 def detect_archetype(text: str) -> str:
     """Detecta o arquétipo baseado no conteúdo da frase"""
     text_lower = text.lower()
-    
+
     scores = {}
     for archetype, keywords in ARCHETYPE_KEYWORDS.items():
         score = sum(1 for kw in keywords if kw in text_lower)
         if score > 0:
             scores[archetype] = score
-    
+
     if scores:
         return max(scores, key=scores.get)
     return "default"
@@ -145,35 +145,35 @@ def parse_ecos_da_alma(filepath: str) -> list:
     """
     with open(filepath, 'r', encoding='utf-8') as f:
         content = f.read()
-    
+
     phrases = []
     current_lote = None
     current_archetype = None
     current_tone = None
-    
+
     lines = content.split('\n')
-    
+
     for i, line in enumerate(lines):
         line = line.strip()
-        
-        if line.startswith('🌑 Lote') or line.startswith('Lote'):
+
+        if line.startswith(' Lote') or line.startswith('Lote'):
             match = re.search(r'Lote\s*(\d+)', line)
             if match:
                 current_lote = int(match.group(1))
-        
+
         if 'Arquétipo:' in line:
             current_archetype = line.split('Arquétipo:')[1].strip()
-        
+
         if 'Tom:' in line:
             current_tone = line.split('Tom:')[1].strip()
-        
+
         if line.startswith('"') and line.endswith('"'):
             phrase_text = line[1:-1].strip()
-            
+
             if len(phrase_text) > 10:
                 detected = detect_archetype(phrase_text)
                 settings = get_voice_settings(detected)
-                
+
                 phrases.append({
                     'text': phrase_text,
                     'lote': current_lote,
@@ -184,7 +184,7 @@ def parse_ecos_da_alma(filepath: str) -> list:
                     'similarity_boost': settings.similarity_boost,
                     'style': settings.style
                 })
-    
+
     return phrases
 
 

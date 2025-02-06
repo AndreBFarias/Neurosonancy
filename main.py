@@ -25,54 +25,11 @@ logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger("neurosonancy")
 
 
-def run_launcher():
-    from src.gui.main_menu import NeurosonancyLauncher
-    app = NeurosonancyLauncher()
-    return app.run()
-
-
-def run_ascii_control():
-    from src.modules.ascii_control.ui.app import AsciiControlApp
-    app = AsciiControlApp(return_to_menu=True)
-    return app.run()
-
-
-def run_voice_trainer():
-    from src.modules.voice_trainer.main import VoiceTrainerApp
-    app = VoiceTrainerApp(return_to_menu=True)
-    return app.run()
-
-
-def run_clone_voice():
-    from src.modules.clone_voice.ui.app import CloneVoiceApp
-    app = CloneVoiceApp(return_to_menu=True)
-    return app.run()
-
-
-def main():
+def main() -> None:
     logger.info("Neurosonancy iniciado")
-
-    while True:
-        result = run_launcher()
-
-        if result == "ascii":
-            logger.info("Iniciando Monitor")
-            module_result = run_ascii_control()
-            if module_result == "quit":
-                break
-        elif result == "voice":
-            logger.info("Iniciando Trainer")
-            module_result = run_voice_trainer()
-            if module_result == "quit":
-                break
-        elif result == "clone":
-            logger.info("Iniciando Clone Voice")
-            module_result = run_clone_voice()
-            if module_result == "quit":
-                break
-        else:
-            logger.info("Neurosonancy encerrado")
-            break
+    from src.unified_app import NeurosonancyUnifiedApp
+    NeurosonancyUnifiedApp().run()
+    logger.info("Neurosonancy encerrado")
 
 
 if __name__ == "__main__":

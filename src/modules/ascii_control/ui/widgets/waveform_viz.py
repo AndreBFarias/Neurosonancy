@@ -102,16 +102,16 @@ class WaveformVisualizer(Static):
         bot_str = "".join(bot_row)
 
         if self.is_playing:
-            status = f"[#50fa7b]▶ PLAYING[/]"
+            status = f"[#50fa7b] PLAYING[/]"
             color = "#50fa7b" if self.mood != "intense" else "#ff5555"
         else:
-            status = "[#6272a4]◼ STOPPED[/]"
+            status = "[#6272a4] STOPPED[/]"
             color = "#6272a4"
 
         info = f"[#8be9fd]BPM:{self.bpm}[/] [#ffb86c]{self.mood.upper()}[/]"
 
         content = (
-            f"[bold #ff79c6]♫ SYNTH[/] {status} {info}\n"
+            f"[bold #ff79c6] SYNTH[/] {status} {info}\n"
             f"[{color}]{top_str}[/]\n"
             f"[{color}]{bot_str}[/]"
         )

@@ -183,9 +183,9 @@ class NeuroVisualizer(Static):
 
             text = Text()
 
-            status = "[#50fa7b]●[/]" if self.is_active else "[#6272a4]○[/]"
+            status = "[#50fa7b][/]" if self.is_active else "[#6272a4][/]"
             acid_str = " [#ff5555]ACID[/]" if self.acid_mode else ""
-            header = f"[bold #ff79c6]♫ NEURO[/] {status} [#8be9fd]BPM:{self.bpm}[/]{acid_str}\n"
+            header = f"[bold #ff79c6] NEURO[/] {status} [#8be9fd]BPM:{self.bpm}[/]{acid_str}\n"
             text.append_text(Text.from_markup(header))
 
             for row in lines:

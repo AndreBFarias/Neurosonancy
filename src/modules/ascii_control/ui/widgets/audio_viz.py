@@ -28,7 +28,7 @@ class AudioVisualizer(Static):
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
-        self._label = "[bold #ff79c6]◉ AUDIO[/] "
+        self._label = "[bold #ff79c6] AUDIO[/] "
 
     def on_mount(self) -> None:
         self.samples = [0.0] * 32
