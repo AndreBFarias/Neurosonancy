@@ -22,7 +22,7 @@ class NeurosonancyUnifiedApp(App):
     SUB_TITLE = "Unified"
 
     BINDINGS = [
-        Binding("1", "switch_module('monitor')", "Monitor", show=True),
+        Binding("1", "switch_module('monitor')", "Media", show=True),
         Binding("2", "switch_module('trainer')", "Trainer", show=True),
         Binding("3", "switch_module('clone')", "Clone", show=True),
         Binding("q", "quit", "Sair", show=True),
@@ -134,6 +134,8 @@ class NeurosonancyUnifiedApp(App):
         self.run_worker(self._mpris.prev_track, exclusive=False)
 
     def on_media_header_volume_changed(self, event: MediaHeader.VolumeChanged) -> None:
+        from src.core.widgets.media_header import _set_system_volume
+        _set_system_volume(event.volume)
         self.run_worker(
             lambda: self._mpris.set_volume(event.volume),
             exclusive=False,

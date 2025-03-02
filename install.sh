@@ -115,22 +115,9 @@ echo "[FASE 4/4] Registrando Aplicativo"
 echo "============================================"
 
 mkdir -p "$HOME/.local/share/applications"
+chmod +x "$SCRIPT_DIR/scripts/launch.sh"
 
-cat > "$DESKTOP_FILE" << EOF
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Neurosonancy
-GenericName=Voice Cloning Toolkit
-Comment=Voice Cloning and Training Toolkit
-Exec=bash -c 'cd "$SCRIPT_DIR" && source venv/bin/activate && python3 main.py'
-Icon=$ICON_PATH
-Terminal=true
-Categories=AudioVideo;Audio;Utility;
-Keywords=voice;clone;tts;audio;training;
-StartupNotify=true
-EOF
-
+cp "$SCRIPT_DIR/neurosonancy.desktop" "$DESKTOP_FILE"
 chmod +x "$DESKTOP_FILE"
 
 if command -v update-desktop-database &> /dev/null; then
@@ -139,6 +126,7 @@ fi
 
 echo "[OK] Aplicativo registrado no menu!"
 echo "  -> $DESKTOP_FILE"
+echo "  -> Launcher: $SCRIPT_DIR/scripts/launch.sh"
 
 echo ""
 echo "============================================"

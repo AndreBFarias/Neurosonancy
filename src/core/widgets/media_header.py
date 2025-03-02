@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import re
+import subprocess
 from textual.app import ComposeResult
 from textual.message import Message
 from textual.reactive import reactive
@@ -8,6 +10,29 @@ from textual.widgets import Button, Static, Select, ProgressBar
 
 from src.core.theme import COLORS
 from src.core.media_bridge import TrackInfo
+
+
+def _get_system_volume() -> float:
+    try:
+        out = subprocess.run(
+            ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
+            capture_output=True, text=True, timeout=2
+        ).stdout
+        m = re.search(r"(\d+)%", out)
+        return int(m.group(1)) / 100 if m else 0.8
+    except Exception:
+        return 0.8
+
+
+def _set_system_volume(volume: float) -> None:
+    pct = min(100, max(0, int(volume * 100)))
+    try:
+        subprocess.run(
+            ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{pct}%"],
+            capture_output=True, timeout=2
+        )
+    except Exception:
+        pass
 
 
 class MediaHeader(Widget):
@@ -20,7 +45,7 @@ class MediaHeader(Widget):
     active_module: reactive[str] = reactive("monitor")
 
     _MODULE_LABELS: dict[str, str] = {
-        "monitor": "MONITOR",
+        "monitor": "MEDIA PLAYER",
         "trainer": "VOICE TRAINER",
         "clone": "CLONE VOICE",
     }
@@ -150,6 +175,7 @@ class MediaHeader(Widget):
         self.border_title = self._MODULE_LABELS.get(self.active_module, "MONITOR")
         self._refresh_track_display()
         self._populate_models()
+        self.volume = _get_system_volume()
         self.watch_volume(self.volume)
 
     def _populate_models(self) -> None:

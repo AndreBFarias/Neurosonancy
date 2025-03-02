@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Neurosonancy
+Comment=Voice cloning and synthesis studio
+Exec=/home/andrefarias/Desenvolvimento/Neurosonancy/scripts/launch.sh
+Icon=/home/andrefarias/Desenvolvimento/Neurosonancy/assets/icon.png
+Type=Application
+Categories=AudioVideo;Audio;
+Terminal=false
+StartupWMClass=io.neurosonancy.app

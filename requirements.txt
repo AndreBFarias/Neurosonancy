@@ -12,5 +12,4 @@ pydub>=0.25.0
 httpx>=0.25.0
 requests>=2.31.0
 dbus-next>=0.2.3
-pystray>=0.19.5
-Pillow>=10.0.0
+psutil>=5.9.0

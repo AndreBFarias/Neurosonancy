@@ -17,7 +17,7 @@ class NavItem:
 
 
 _NAV_ITEMS: list[NavItem] = [
-    NavItem("monitor", "Monitor", "1"),
+    NavItem("monitor", "Media", "1"),
     NavItem("trainer", "Trainer", "2"),
     NavItem("clone", "Clone Voice", "3"),
 ]

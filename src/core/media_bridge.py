@@ -49,13 +49,14 @@ class MPRISBridge:
 
         try:
             self._bus = await MessageBus(bus_type=BusType.SESSION).connect()
-            reply = await self._bus.call_method(
-                "org.freedesktop.DBus",
-                "/org/freedesktop/DBus",
-                "org.freedesktop.DBus",
-                "ListNames",
+            dbus_intro = await self._bus.introspect(
+                "org.freedesktop.DBus", "/org/freedesktop/DBus"
             )
-            names: list[str] = reply.body[0]
+            dbus_obj = self._bus.get_proxy_object(
+                "org.freedesktop.DBus", "/org/freedesktop/DBus", dbus_intro
+            )
+            dbus_iface = dbus_obj.get_interface("org.freedesktop.DBus")
+            names: list[str] = await dbus_iface.call_list_names()
             players = [n for n in names if n.startswith(self.MPRIS_PREFIX)]
 
             if not players:
@@ -95,16 +96,34 @@ class MPRISBridge:
             artist = ", ".join(artist_raw) if isinstance(artist_raw, list) else str(artist_raw)
             album = _extract_variant(metadata, "xesam:album", "")
             duration = int(_extract_variant(metadata, "mpris:length", 0))
+
+            position = 0
+            try:
+                raw_pos = await self._player_proxy.get_position()
+                position = int(raw_pos) if raw_pos is not None else 0
+            except Exception:
+                pass
+
             return TrackInfo(
                 title=title,
                 artist=artist,
                 album=album,
                 player_name=self._player_name,
                 duration_us=duration,
+                position_us=position,
             )
         except Exception as e:
             logger.debug("Erro ao obter faixa: %s", e)
             return TrackInfo()
+
+    async def get_playback_status(self) -> PlaybackState:
+        if not self._player_proxy:
+            return PlaybackState.STOPPED
+        try:
+            status = await self._player_proxy.get_playback_status()
+            return PlaybackState(status)
+        except Exception:
+            return PlaybackState.STOPPED
 
     async def play_pause(self) -> None:
         if not self._player_proxy:

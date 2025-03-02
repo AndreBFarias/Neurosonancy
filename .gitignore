@@ -71,3 +71,9 @@ checkpoint*/
 
 # Codigo deprecated
 src/modules/clone_voice/core/_deprecated/
+
+# Arquivos externos / gerados / evidencias de IA
+KIMI.md
+CLAUDE.md.backup
+Claude-templates/
+NEUROSONANCY_*.svg
