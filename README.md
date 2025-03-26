@@ -14,31 +14,31 @@
 
 ---
 
-## Descricao
+## Descrição
 
-Neurosonancy e um toolkit completo para clonagem e treinamento de vozes, com interface TUI moderna (Textual) em tema Dracula. Integra ElevenLabs API para geracao de datasets e suporta fine-tuning com Chatterbox TTS e Coqui XTTS.
+Neurosonancy é um toolkit completo para clonagem e treinamento de vozes, com interface TUI moderna (Textual) em tema Dracula. Integra ElevenLabs API para geração de datasets e suporta fine-tuning com Chatterbox TTS e Coqui XTTS.
 
 ---
 
-## Modulos
+## Módulos
 
 ### Clone Voice
-Modulo principal para clonagem de voz:
-- Geracao de datasets via ElevenLabs API
+Módulo principal para clonagem de voz:
+- Geração de datasets via ElevenLabs API
 - Suporte a formato LJSpeech (metadata.csv + wavs/)
 - Suporte a formato Chatterbox (JSONL + wavs/)
 - Treinamento Chatterbox TTS (12GB VRAM)
 - Treinamento Coqui XTTS v2 (8GB VRAM)
 
 ### ASCII Control
-Monitor de audio com visualizacao de metricas em tempo real.
+Monitor de áudio com visualização de métricas em tempo real.
 
 ### Voice Trainer
-Gravador de amostras para treinamento com transcricao automatica via Whisper.
+Gravador de amostras para treinamento com transcrição automática via Whisper.
 
 ---
 
-## Instalacao
+## Instalação
 
 ```bash
 chmod +x install.sh
@@ -52,7 +52,7 @@ O instalador cria 3 ambientes virtuais separados:
 
 ---
 
-## Execucao
+## Execução
 
 ```bash
 source venv/bin/activate
@@ -68,7 +68,7 @@ Neurosonancy/
 ├── main.py                    # Orquestrador
 ├── install.sh                 # Setup (3 venvs)
 ├── uninstall.sh               # Remocao limpa
-├── requirements.txt           # Dependencias core
+├── requirements.txt           # Dependências core
 ├── src/
 │   ├── gui/
 │   │   └── main_menu.py       # Menu principal
@@ -104,9 +104,9 @@ Neurosonancy/
 
 ```markdown
 # Frases para Dataset
-- Primeira frase para geracao
-- Segunda frase para geracao
-- Terceira frase para geracao
+- Primeira frase para geração
+- Segunda frase para geração
+- Terceira frase para geração
 ```
 
 ---
