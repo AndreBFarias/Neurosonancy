@@ -1,9 +1,9 @@
 <div align="center">
 
 [![opensource](https://badges.frapsoft.com/os/v1/open-source.png?v=103)](#)
-[![Licenca](https://img.shields.io/badge/licenca-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Licença](https://img.shields.io/badge/licenca-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.10+-green.svg)](https://www.python.org/)
-[![Contribuicoes](https://img.shields.io/badge/contribuicoes-bem--vindas-brightgreen.svg)](https://github.com/seu-usuario/Neurosonancy/issues)
+[![Contribuições](https://img.shields.io/badge/contribuicoes-bem--vindas-brightgreen.svg)](https://github.com/seu-usuario/Neurosonancy/issues)
 
 <h1>NEUROSONANCY</h1>
 <img src="assets/icon.png" width="120" alt="Logo Neurosonancy">
@@ -45,7 +45,7 @@ chmod +x install.sh
 ./install.sh
 ```
 
-O instalador cria 3 ambientes virtuais separados:
+O instalador cria 3 ambientes virtuais separados (um por backend):
 - `venv/` - Interface principal + ElevenLabs
 - `venv_chatterbox/` - Treinamento Chatterbox TTS
 - `venv_coqui/` - Treinamento Coqui XTTS
@@ -113,7 +113,7 @@ Neurosonancy/
 
 ## Requisitos de Hardware
 
-| Modelo | VRAM Minima | Amostras Minimas |
+| Modelo | VRAM Mínima | Amostras Mínimas |
 |--------|-------------|------------------|
 | Chatterbox TTS | 12GB | 10 |
 | Coqui XTTS v2 | 8GB | 5 |
@@ -125,10 +125,10 @@ Neurosonancy/
 - Python 3.10+
 - Sistema Linux (testado em Pop!_OS)
 - GPU NVIDIA com CUDA (para treinamento)
-- API Key ElevenLabs (para geracao de dataset)
+- API Key ElevenLabs (para geração de dataset)
 
 ---
 
-## Licenca
+## Licença
 
 GPLv3 - Consulte o arquivo LICENSE
