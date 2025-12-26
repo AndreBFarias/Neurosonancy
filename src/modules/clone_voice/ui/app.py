@@ -11,11 +11,13 @@ from datetime import datetime
 
 from textual.app import ComposeResult
 from textual.binding import Binding
+from textual.screen import ModalScreen
 from textual.widgets import (
     Header, Footer, Static, Button, Label,
-    Input, ProgressBar, RichLog, RadioSet, RadioButton
+    Input, ProgressBar, RichLog, RadioSet, RadioButton, OptionList, Checkbox
 )
-from textual.containers import Vertical, Horizontal, VerticalScroll
+from textual.widgets.option_list import Option
+from textual.containers import Vertical, Horizontal, VerticalScroll, Center
 from textual.reactive import reactive
 
 from src.core.base_app import NeurosonancyBaseApp
@@ -67,6 +69,83 @@ class StatusPanel(Static):
         return text
 
 
+class TrainingCompleteModal(ModalScreen):
+
+    CSS = """
+    TrainingCompleteModal {
+        align: center middle;
+    }
+
+    #modal-container {
+        width: 50;
+        height: 14;
+        background: #1a1d2e;
+        border: solid #22c55e;
+        padding: 1 2;
+    }
+
+    #modal-title {
+        text-align: center;
+        text-style: bold;
+        color: #22c55e;
+        margin-bottom: 1;
+    }
+
+    #modal-message {
+        text-align: center;
+        color: #94a3b8;
+        margin-bottom: 1;
+    }
+
+    #modal-path {
+        text-align: center;
+        color: #22d3ee;
+        margin-bottom: 1;
+    }
+
+    .modal-buttons {
+        layout: horizontal;
+        height: 3;
+        align: center middle;
+        margin-top: 1;
+    }
+
+    .modal-buttons Button {
+        width: 1fr;
+        margin: 0 1;
+    }
+
+    #btn-modal-ok {
+        background: #6366f1;
+        color: #0d0f18;
+    }
+
+    #btn-modal-open {
+        background: #22c55e;
+        color: #0d0f18;
+    }
+    """
+
+    def __init__(self, output_path: Path, model_type: str):
+        super().__init__()
+        self._output_path = output_path
+        self._model_type = model_type
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="modal-container"):
+            yield Static("TREINAMENTO CONCLUIDO", id="modal-title")
+            yield Static(f"Modelo: {self._model_type.upper()}", id="modal-message")
+            yield Static(f"{self._output_path.name}", id="modal-path")
+            with Horizontal(classes="modal-buttons"):
+                yield Button("OK", id="btn-modal-ok")
+                yield Button("ABRIR PASTA", id="btn-modal-open")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "btn-modal-open":
+            subprocess.Popen(["xdg-open", str(self._output_path)])
+        self.dismiss()
+
+
 class CloneVoiceApp(NeurosonancyBaseApp):
     TITLE = "NEUROSONANCY"
     SUB_TITLE = "Clone Voice"
@@ -83,13 +162,13 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     }
 
     #left-column {
-        width: 32%;
+        width: 30%;
         height: 100%;
         padding: 0;
     }
 
     #right-column {
-        width: 68%;
+        width: 70%;
         height: 100%;
         padding: 0 0 0 1;
     }
@@ -108,26 +187,29 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     #right-top {
         layout: horizontal;
-        height: 45%;
+        height: 55%;
     }
 
     #generator-panel {
-        width: 50%;
+        width: 1fr;
+        height: 100%;
         background: #1a1d2e;
         border: solid #8b5cf6;
-        padding: 1;
+        padding: 1 2;
     }
 
     #training-panel {
-        width: 50%;
+        width: 1fr;
+        height: 100%;
         background: #1a1d2e;
         border: solid #22d3ee;
-        padding: 1;
+        padding: 1 2;
         margin-left: 1;
+        overflow-y: auto;
     }
 
     #output-panel {
-        height: 55%;
+        height: 45%;
         background: #1a1d2e;
         border: solid #2d3250;
         padding: 1;
@@ -146,35 +228,28 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     #training-panel .panel-title { color: #22d3ee; }
     #output-panel .panel-title { color: #22d3ee; }
 
-    .setting-row {
-        height: auto;
-        margin-bottom: 0;
-    }
-
     .setting-label {
         color: #94a3b8;
         padding: 0;
-        margin-top: 1;
-    }
-
-    .setting-hint {
-        color: #64748b;
-        text-style: italic;
-    }
-
-    .setting-input {
-        margin: 0;
+        margin-top: 0;
+        height: 1;
     }
 
     Input {
-        height: 1;
-        padding: 0;
-        margin: 0 0 0 0;
+        height: 3;
+        padding: 0 1;
+        margin: 0;
+    }
+
+    #training-panel Input,
+    #generator-panel Input {
+        height: 3;
+        margin-bottom: 1;
     }
 
     Button {
         height: 3;
-        min-width: 10;
+        min-width: 8;
         margin: 0;
     }
 
@@ -202,6 +277,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     #status-indicator {
         text-align: center;
         padding: 0;
+        height: 1;
     }
 
     .counter-display {
@@ -209,6 +285,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         color: #22c55e;
         text-style: bold;
         padding: 0;
+        height: 1;
     }
 
     .current-phrase {
@@ -236,12 +313,6 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         padding: 0;
     }
 
-    .file-row {
-        height: auto;
-        layout: horizontal;
-        margin: 0;
-    }
-
     #btn-browse {
         width: 100%;
         height: 3;
@@ -256,59 +327,95 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         color: #4ade80;
         text-style: italic;
         margin-top: 0;
+        height: 1;
     }
 
-    .dataset-list {
-        height: 4;
+    #dataset-selector {
+        height: 6;
         background: #141620;
         border: solid #2d3250;
         padding: 0;
-        margin-bottom: 1;
+    }
+
+    #dataset-selector > .option-list--option {
+        padding: 0 1;
+    }
+
+    #dataset-selector > .option-list--option-highlighted {
+        background: #8b5cf6;
+        color: #0d0f18;
+    }
+
+    .train-buttons {
+        layout: horizontal;
+        height: auto;
+        margin-top: 1;
+    }
+
+    .train-buttons Button {
+        width: 1fr;
     }
 
     #btn-refresh-datasets {
         width: 100%;
         background: #6366f1;
         color: #0d0f18;
+        margin-top: 1;
+    }
+
+    Checkbox {
+        height: 3;
+        margin: 0;
+        padding: 0 1;
+        width: auto;
+    }
+
+    .use-top-row {
+        layout: horizontal;
+        height: 3;
+        margin: 0;
+        align: left middle;
+    }
+
+    #input-top-n {
+        width: 6;
+        margin-left: 1;
+    }
+
+    .model-hint {
+        color: #64748b;
+        text-style: italic;
+        height: 1;
+        padding: 0;
+        margin: 0;
     }
 
     #btn-train-chatterbox {
-        width: 100%;
         background: #f97316;
         color: #0d0f18;
         text-style: bold;
-        margin-top: 1;
+        margin-right: 1;
     }
 
     #btn-train-chatterbox:hover { background: #fb923c; }
 
     #btn-train-coqui {
-        width: 100%;
         background: #10b981;
         color: #0d0f18;
         text-style: bold;
-        margin-top: 1;
     }
 
     #btn-train-coqui:hover { background: #34d399; }
 
-    #btn-select-best {
-        width: 100%;
-        background: #a855f7;
-        color: #0d0f18;
-        margin-bottom: 1;
-    }
-
-    #btn-select-best:hover { background: #c084fc; }
-
     .training-status {
         text-align: center;
         padding: 0;
+        height: 1;
     }
 
     ProgressBar {
         height: 1;
-        margin: 1 0;
+        margin: 0;
     }
 
     .section-separator {
@@ -324,9 +431,6 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         padding: 0;
         margin: 0;
     }
-
-    .api-valid { color: #22c55e; }
-    .api-invalid { color: #ef4444; }
     """
 
     BINDINGS = [
@@ -350,6 +454,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._training_thread: Optional[threading.Thread] = None
         self._last_output_dir: Optional[Path] = None
         self._selected_dataset: Optional[Path] = None
+        self._datasets_map: Dict[str, Path] = {}
         self._trainer = None
 
     def compose(self) -> ComposeResult:
@@ -362,7 +467,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     yield Static("", id="save-indicator")
 
                     yield Label("API Key:", classes="setting-label")
-                    yield Input(placeholder="sk_xxxxxxxx...", id="input-api-key", password=True)
+                    yield Input(placeholder="sk_xxxxxxxx...", id="input-api-key")
 
                     yield Label("Voice ID:", classes="setting-label")
                     yield Input(placeholder="ID da voz no ElevenLabs", id="input-voice-id")
@@ -400,18 +505,23 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                         yield Button("INICIAR", id="btn-generate")
                         yield Button("PARAR", id="btn-stop", disabled=True)
 
-                    with Vertical(id="training-panel"):
+                    with VerticalScroll(id="training-panel"):
                         yield Static("TREINAR", classes="panel-title")
                         yield Label("Dataset:", classes="setting-label")
-                        yield Static("Nenhum", id="dataset-selector", classes="dataset-list")
+                        yield OptionList(id="dataset-selector")
                         yield Button("ATUALIZAR", id="btn-refresh-datasets")
-                        yield Button("SELECIONAR TOP 10", id="btn-select-best")
-                        yield Label("Epochs:", classes="setting-label")
+                        yield Label("Usar melhores:", classes="setting-label")
+                        with Horizontal(classes="use-top-row"):
+                            yield Checkbox("TOP", id="use-top-checkbox", value=True)
+                            yield Input(value="10", id="input-top-n", type="integer")
+                        yield Label("Epochs (Coqui):", classes="setting-label")
                         yield Input(value="100", id="input-epochs", type="integer")
-                        yield Static("", id="training-status", classes="training-status")
                         yield ProgressBar(id="training-progress", total=100, show_eta=False)
-                        yield Button("CHATTERBOX", id="btn-train-chatterbox")
-                        yield Button("COQUI XTTS", id="btn-train-coqui")
+                        yield Static("[dim]Chatterbox: zero-shot (embeddings)[/]", classes="model-hint")
+                        yield Static("[dim]Coqui: fine-tuning real (lento)[/]", classes="model-hint")
+                        with Horizontal(classes="train-buttons"):
+                            yield Button("CHATTERBOX", id="btn-train-chatterbox")
+                            yield Button("COQUI", id="btn-train-coqui")
 
                 with Vertical(id="output-panel"):
                     yield Static("LOG", classes="panel-title")
@@ -443,6 +553,8 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         self._log("")
         self._log(f"[{COLORS['text_secondary']}]Configure e clique em INICIAR[/]")
+
+        self._refresh_datasets()
 
     def _load_saved_settings(self) -> None:
         config = load_saved_config()
@@ -780,12 +892,17 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self._browse_phrases_file()
         elif button_id == "btn-refresh-datasets":
             self._refresh_datasets()
-        elif button_id == "btn-select-best":
-            self._select_best_audios()
         elif button_id == "btn-train-chatterbox":
             self._start_training("chatterbox")
         elif button_id == "btn-train-coqui":
             self._start_training("coqui")
+
+    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
+        if event.option_list.id == "dataset-selector":
+            option_id = str(event.option_id)
+            if option_id in self._datasets_map:
+                self._selected_dataset = self._datasets_map[option_id]
+                self._log(f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]")
 
     def _browse_phrases_file(self) -> None:
         try:
@@ -846,10 +963,11 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     def _refresh_datasets(self) -> None:
         output_dir = Path(self.query_one("#input-output-dir", Input).value.strip())
-        selector = self.query_one("#dataset-selector", Static)
+        selector = self.query_one("#dataset-selector", OptionList)
 
         if not output_dir.exists():
-            selector.update(f"[{COLORS['warning']}]Dir inexistente[/]")
+            selector.clear_options()
+            selector.add_option(Option("Dir inexistente", id="none", disabled=True))
             return
 
         datasets = []
@@ -858,26 +976,31 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 metadata = item / "metadata.json"
                 wavs_dir = item / "wavs"
                 if metadata.exists() and wavs_dir.exists():
-                    wav_count = len(list(wavs_dir.glob("*.wav")))
-                    if wav_count > 0:
-                        datasets.append((item, wav_count))
+                    audio_count = len(list(wavs_dir.glob("*.mp3"))) + len(list(wavs_dir.glob("*.wav")))
+                    if audio_count > 0:
+                        datasets.append((item, audio_count))
+
+        selector.clear_options()
 
         if not datasets:
-            selector.update(f"[{COLORS['warning']}]Nenhum dataset[/]")
+            selector.add_option(Option("Nenhum dataset", id="none", disabled=True))
             self._selected_dataset = None
+            self._datasets_map = {}
             return
 
         datasets.sort(key=lambda x: x[0].stat().st_mtime, reverse=True)
 
-        lines = []
-        for i, (ds_path, wav_count) in enumerate(datasets[:3]):
-            prefix = "[*]" if i == 0 else "[ ]"
-            name = ds_path.name[:20] + "..." if len(ds_path.name) > 20 else ds_path.name
-            lines.append(f"{prefix} {name} ({wav_count})")
+        self._datasets_map = {}
+        for i, (ds_path, audio_count) in enumerate(datasets):
+            ds_id = f"ds_{i}"
+            name = ds_path.name
+            label = f"{name} ({audio_count})"
+            selector.add_option(Option(label, id=ds_id))
+            self._datasets_map[ds_id] = ds_path
 
-        selector.update("\n".join(lines))
         self._selected_dataset = datasets[0][0]
-        self._log(f"[{COLORS['success']}]Dataset: {datasets[0][0].name}[/]")
+        selector.highlighted = 0
+        self._log(f"[{COLORS['success']}]Datasets encontrados: {len(datasets)}[/]")
 
     def _start_training(self, model_type: str) -> None:
         if self.is_training:
@@ -897,6 +1020,13 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self.notify_error("Epochs invalido")
             return
 
+        use_top = self.query_one("#use-top-checkbox", Checkbox).value
+        top_n = 10
+        try:
+            top_n = int(self.query_one("#input-top-n", Input).value)
+        except ValueError:
+            top_n = 10
+
         output_dir = self._selected_dataset.parent / "trained_models"
 
         self.is_training = True
@@ -905,31 +1035,101 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self.query_one("#btn-train-chatterbox", Button).disabled = True
         self.query_one("#btn-train-coqui", Button).disabled = True
 
-        status = self.query_one("#training-status", Static)
-        status.update(f"[bold {COLORS['warning']}]INICIANDO[/]")
-
         self._log("")
         self._log(f"[{COLORS['info']}]Treinar {model_type.upper()}...[/]")
-        self._log(f"[{COLORS['text_muted']}]{self._selected_dataset.name} | {epochs} epochs[/]")
+        if use_top:
+            self._log(f"[{COLORS['text_muted']}]Usando TOP {top_n} audios de {self._selected_dataset.name}[/]")
+        else:
+            self._log(f"[{COLORS['text_muted']}]Usando todos audios de {self._selected_dataset.name}[/]")
+        self._log(f"[{COLORS['text_muted']}]Epochs: {epochs}[/]")
 
         self._training_thread = threading.Thread(
             target=self._run_training,
-            args=(model_type, self._selected_dataset, output_dir, epochs),
+            args=(model_type, self._selected_dataset, output_dir, epochs, use_top, top_n),
             daemon=True
         )
         self._training_thread.start()
 
-    def _run_training(self, model_type: str, dataset_dir: Path, output_dir: Path, epochs: int) -> None:
+    def _run_training(
+        self,
+        model_type: str,
+        dataset_dir: Path,
+        output_dir: Path,
+        epochs: int,
+        use_top: bool = True,
+        top_n: int = 10
+    ) -> None:
         try:
             from src.modules.clone_voice.core.training import (
                 TrainingConfig, ChatterboxTrainer, CoquiTrainer
             )
+            from src.modules.clone_voice.core import AudioQualityAnalyzer
+
+            training_dataset_dir = dataset_dir
+
+            unified_audio_path = None
+
+            if use_top:
+                self.call_from_thread(self._log, f"[{COLORS['info']}]Selecionando TOP {top_n} audios...[/]")
+
+                analyzer = AudioQualityAnalyzer()
+                result = analyzer.analyze_dataset(dataset_dir)
+
+                if result.analyzed_files == 0:
+                    self.call_from_thread(self._on_training_error, "Nenhum audio no dataset")
+                    return
+
+                selection = analyzer.get_diverse_selection(top_n)
+
+                if not selection:
+                    self.call_from_thread(self._on_training_error, "Falha ao selecionar audios")
+                    return
+
+                selection_dir = dataset_dir / f"top_{top_n}_selection"
+                analyzer.export_selection(selection, selection_dir)
+
+                self.call_from_thread(
+                    self._log,
+                    f"[{COLORS['info']}]Concatenando {len(selection)} audios em arquivo unico...[/]"
+                )
+
+                unified_audio_path = analyzer.create_unified_reference(selection, selection_dir)
+
+                if unified_audio_path and unified_audio_path.exists():
+                    duration = unified_audio_path.stat().st_size / (22050 * 2)
+                    self.call_from_thread(
+                        self._log,
+                        f"[{COLORS['success']}]Audio unificado: {unified_audio_path.name}[/]"
+                    )
+                else:
+                    self.call_from_thread(self._on_training_error, "Falha ao criar audio unificado")
+                    return
+
+                wavs_dir = selection_dir / "wavs"
+                wavs_dir.mkdir(parents=True, exist_ok=True)
+                for m in selection:
+                    src = m.file_path
+                    dst = wavs_dir / m.file_name
+                    if not dst.exists():
+                        import shutil
+                        shutil.copy(src, dst)
+
+                training_dataset_dir = selection_dir
+
+                self.call_from_thread(
+                    self._log,
+                    f"[{COLORS['success']}]TOP {top_n}: {len(selection)} audios prontos[/]"
+                )
+
+            import re
+            base_name = re.sub(r'_\d{8}_\d{6}$', '', dataset_dir.name)
 
             config = TrainingConfig(
-                dataset_dir=dataset_dir,
+                dataset_dir=training_dataset_dir,
                 output_dir=output_dir,
-                model_name=dataset_dir.name,
+                model_name=base_name,
                 epochs=epochs,
+                unified_reference_path=unified_audio_path,
             )
 
             if model_type == "chatterbox":
@@ -975,11 +1175,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self.call_from_thread(self._on_training_error, str(e))
 
     def _update_training_status(self, status: str) -> None:
-        try:
-            status_widget = self.query_one("#training-status", Static)
-            status_widget.update(f"[bold {COLORS['warning']}]{status}[/]")
-        except Exception:
-            pass
+        self._log(f"[{COLORS['warning']}]{status}[/]")
 
     def _on_training_progress(self, step: int, total: int, loss: float) -> None:
         try:
@@ -999,10 +1195,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self.query_one("#btn-train-chatterbox", Button).disabled = False
         self.query_one("#btn-train-coqui", Button).disabled = False
 
-        status = self.query_one("#training-status", Static)
-
         if stats.is_completed:
-            status.update(f"[bold {COLORS['success']}]CONCLUIDO[/]")
             self._log("")
             self._log(f"[bold {COLORS['success']}]TREINAMENTO OK[/]")
             self._log(f"[{COLORS['text_muted']}]Epochs: {stats.current_epoch} | Loss: {stats.best_loss:.4f}[/]")
@@ -1010,10 +1203,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             if stats.output_path:
                 self._last_output_dir = stats.output_path
                 self._log(f"[{COLORS['neon_cyan']}]{stats.output_path}[/]")
+                self.push_screen(TrainingCompleteModal(stats.output_path, stats.model_type))
 
             self.notify_success("Treinamento concluido")
         else:
-            status.update(f"[bold {COLORS['warning']}]PARADO[/]")
             self._log(f"[{COLORS['warning']}]Treinamento interrompido[/]")
 
     def _on_training_error(self, error: str) -> None:
@@ -1021,9 +1214,6 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         self.query_one("#btn-train-chatterbox", Button).disabled = False
         self.query_one("#btn-train-coqui", Button).disabled = False
-
-        status = self.query_one("#training-status", Static)
-        status.update(f"[bold {COLORS['error']}]ERRO[/]")
 
         self._log(f"[{COLORS['error']}]Erro: {error}[/]")
         self.notify_error("Erro no treinamento")

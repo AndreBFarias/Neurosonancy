@@ -29,6 +29,7 @@ class TrainingConfig:
     gradient_accumulation_steps: int = 8
     warmup_steps: int = 50
     max_audio_length_seconds: float = 15.0
+    unified_reference_path: Optional[Path] = None
 
 
 @dataclass
@@ -127,8 +128,8 @@ class TrainerBase(ABC):
 
         wavs_dir = dataset_dir / "wavs"
         if wavs_dir.exists():
-            wav_files = list(wavs_dir.glob("*.wav"))
-            info["wav_count"] = len(wav_files)
+            audio_files = list(wavs_dir.glob("*.wav")) + list(wavs_dir.glob("*.mp3"))
+            info["wav_count"] = len(audio_files)
 
         metadata_csv = dataset_dir / "metadata.csv"
         info["has_metadata"] = metadata_csv.exists() and metadata_csv.stat().st_size > 0

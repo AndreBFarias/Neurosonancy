@@ -78,6 +78,8 @@ class DatasetManager:
         self.on_phrase_generated: Optional[Callable[[int, str, Path], None]] = None
 
     def initialize(self) -> bool:
+        logger.info(f"Inicializando DatasetManager: voice={self.config.voice_id}, model={self.config.model_id}")
+
         self.client = ElevenLabsClient(
             api_key=self.api_key,
             voice_id=self.config.voice_id,
@@ -92,7 +94,10 @@ class DatasetManager:
         )
 
         if not self.client.initialize():
+            logger.error("Falha ao inicializar ElevenLabsClient")
             return False
+
+        logger.info("ElevenLabsClient inicializado com sucesso")
 
         if self.config.phrases_file and self.config.phrases_file.exists():
             if not self.parser.parse_file(self.config.phrases_file):
@@ -183,7 +188,7 @@ class DatasetManager:
         return self.stats
 
     def _generate_single_with_retry(self, index: int, phrase: str, dataset_dir: Path, max_retries: int = 3) -> GenerationResult:
-        audio_path = dataset_dir / "wavs" / f"{index:04d}.wav"
+        audio_path = dataset_dir / "wavs" / f"{index:04d}.mp3"
         transcript_path = dataset_dir / "transcripts" / f"{index:04d}.txt"
 
         for attempt in range(max_retries):
@@ -213,7 +218,7 @@ class DatasetManager:
         return result
 
     def _generate_single(self, index: int, phrase: str, dataset_dir: Path) -> GenerationResult:
-        audio_path = dataset_dir / "wavs" / f"{index:04d}.wav"
+        audio_path = dataset_dir / "wavs" / f"{index:04d}.mp3"
         transcript_path = dataset_dir / "transcripts" / f"{index:04d}.txt"
 
         result = self.client.generate_audio(phrase, audio_path)
@@ -249,7 +254,7 @@ class DatasetManager:
         ljspeech_path = dataset_dir / "metadata.csv"
         with open(ljspeech_path, 'w', encoding='utf-8') as f:
             for entry in self.entries:
-                audio_name = entry.audio_file.replace('.wav', '')
+                audio_name = entry.audio_file.replace('.mp3', '').replace('.wav', '')
                 phrase_clean = entry.phrase.replace('|', ' ').replace('\n', ' ')
                 f.write(f"{audio_name}|{phrase_clean}|{phrase_clean}\n")
 

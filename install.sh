@@ -99,7 +99,7 @@ else
     [ -d "$VENV_COQUI" ] && rm -rf "$VENV_COQUI"
     install_venv "$VENV_COQUI" "venv_coqui" ""
     echo "  -> Instalando Coqui TTS + PyTorch..."
-    "$VENV_COQUI/bin/pip" install coqui-tts torch torchaudio --quiet
+    "$VENV_COQUI/bin/pip" install coqui-tts torch torchaudio pydub torchcodec --quiet
     echo "  -> Coqui TTS instalado!"
 fi
 
