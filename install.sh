@@ -85,7 +85,7 @@ else
     [ -d "$VENV_CHATTERBOX" ] && rm -rf "$VENV_CHATTERBOX"
     install_venv "$VENV_CHATTERBOX" "venv_chatterbox" ""
     echo "  -> Instalando Chatterbox TTS + PyTorch..."
-    "$VENV_CHATTERBOX/bin/pip" install chatterbox-tts torch torchaudio --quiet
+    "$VENV_CHATTERBOX/bin/pip" install chatterbox-tts torch torchaudio peft --quiet
     echo "  -> Chatterbox TTS instalado!"
 fi
 
