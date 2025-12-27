@@ -1528,10 +1528,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         script = f'''
 import torch
 import torchaudio
-from chatterbox.tts import ChatterboxTTS
+from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
-model = ChatterboxTTS.from_pretrained(device="cuda" if torch.cuda.is_available() else "cpu")
-audio = model.generate(text="{text}", audio_prompt_path="{reference_audio}")
+model = ChatterboxMultilingualTTS.from_pretrained(device="cuda" if torch.cuda.is_available() else "cpu")
+audio = model.generate(text="{text}", audio_prompt_path="{reference_audio}", language_id="pt")
 audio_cpu = audio.cpu()
 if audio_cpu.dim() == 3:
     audio_cpu = audio_cpu.squeeze(0)
