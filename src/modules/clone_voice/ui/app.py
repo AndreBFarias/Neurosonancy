@@ -208,11 +208,55 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         overflow-y: auto;
     }
 
-    #output-panel {
+    #right-bottom {
+        layout: horizontal;
         height: 45%;
+        margin-top: 1;
+    }
+
+    #output-panel {
+        width: 1fr;
+        height: 100%;
         background: #1a1d2e;
         border: solid #2d3250;
         padding: 1;
+    }
+
+    #test-panel {
+        width: 1fr;
+        height: 100%;
+        background: #1a1d2e;
+        border: solid #f59e0b;
+        padding: 1 2;
+        margin-left: 1;
+    }
+
+    #model-selector-test {
+        height: 5;
+        background: #141620;
+        border: solid #2d3250;
+        padding: 0;
+    }
+
+    #input-test-text {
+        height: 3;
+        margin: 1 0;
+    }
+
+    #btn-play {
+        width: 100%;
+        background: #f59e0b;
+        color: #0d0f18;
+        text-style: bold;
+    }
+
+    #btn-play:hover { background: #fbbf24; }
+    #btn-play:disabled { background: #2d3250; color: #64748b; }
+
+    #btn-refresh-models {
+        width: 100%;
+        background: #6366f1;
+        color: #0d0f18;
         margin-top: 1;
     }
 
@@ -226,7 +270,8 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     #config-panel .panel-title { color: #ec4899; }
     #generator-panel .panel-title { color: #8b5cf6; }
     #training-panel .panel-title { color: #22d3ee; }
-    #output-panel .panel-title { color: #22d3ee; }
+    #output-panel .panel-title { color: #64748b; }
+    #test-panel .panel-title { color: #f59e0b; }
 
     .setting-label {
         color: #94a3b8;
@@ -456,6 +501,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._selected_dataset: Optional[Path] = None
         self._datasets_map: Dict[str, Path] = {}
         self._trainer = None
+        self._models_map: Dict[str, Path] = {}
+        self._selected_model: Optional[Path] = None
+        self._is_playing: bool = False
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -523,9 +571,19 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                             yield Button("CHATTERBOX", id="btn-train-chatterbox")
                             yield Button("COQUI", id="btn-train-coqui")
 
-                with Vertical(id="output-panel"):
-                    yield Static("LOG", classes="panel-title")
-                    yield RichLog(id="output-log", markup=True, highlight=True, wrap=True)
+                with Horizontal(id="right-bottom"):
+                    with Vertical(id="output-panel"):
+                        yield Static("LOG", classes="panel-title")
+                        yield RichLog(id="output-log", markup=True, highlight=True, wrap=True)
+
+                    with Vertical(id="test-panel"):
+                        yield Static("TESTAR", classes="panel-title")
+                        yield Label("Modelo:", classes="setting-label")
+                        yield OptionList(id="model-selector-test")
+                        yield Button("ATUALIZAR", id="btn-refresh-models")
+                        yield Label("Texto:", classes="setting-label")
+                        yield Input(placeholder="Digite o texto para sintetizar...", id="input-test-text")
+                        yield Button("OUVIR", id="btn-play")
 
         yield Footer()
 
@@ -555,6 +613,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._log(f"[{COLORS['text_secondary']}]Configure e clique em INICIAR[/]")
 
         self._refresh_datasets()
+        self._refresh_models()
 
     def _load_saved_settings(self) -> None:
         config = load_saved_config()
@@ -896,6 +955,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self._start_training("chatterbox")
         elif button_id == "btn-train-coqui":
             self._start_training("coqui")
+        elif button_id == "btn-refresh-models":
+            self._refresh_models()
+        elif button_id == "btn-play":
+            self._play_test_audio()
 
     def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
         if event.option_list.id == "dataset-selector":
@@ -903,6 +966,11 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             if option_id in self._datasets_map:
                 self._selected_dataset = self._datasets_map[option_id]
                 self._log(f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]")
+        elif event.option_list.id == "model-selector-test":
+            option_id = str(event.option_id)
+            if option_id in self._models_map:
+                self._selected_model = self._models_map[option_id]
+                self._log(f"[{COLORS['info']}]Modelo: {self._selected_model.name}[/]")
 
     def _browse_phrases_file(self) -> None:
         try:
@@ -1333,6 +1401,142 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         except Exception as e:
             self._log(f"[{COLORS['error']}]Erro ao validar API Key: {e}[/]")
             return False
+
+    def _refresh_models(self) -> None:
+        try:
+            model_list = self.query_one("#model-selector-test", OptionList)
+            model_list.clear_options()
+            self._models_map.clear()
+
+            trained_models_dir = DEFAULT_OUTPUT_DIR / "trained_models"
+            if not trained_models_dir.exists():
+                return
+
+            models = []
+            for item in trained_models_dir.iterdir():
+                if item.is_dir() and (item.name.endswith("_chatterbox") or item.name.endswith("_coqui")):
+                    models.append(item)
+
+            models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+
+            for model_path in models:
+                model_id = model_path.name
+                self._models_map[model_id] = model_path
+
+                if model_path.name.endswith("_chatterbox"):
+                    label = f"[#f97316]{model_path.name}[/]"
+                else:
+                    label = f"[#10b981]{model_path.name}[/]"
+
+                model_list.add_option(Option(label, id=model_id))
+
+            if models:
+                self._selected_model = models[0]
+
+        except Exception as e:
+            self._log(f"[{COLORS['error']}]Erro ao listar modelos: {e}[/]")
+
+    def _play_test_audio(self) -> None:
+        if self._is_playing:
+            self._log(f"[{COLORS['warning']}]Geracao em andamento...[/]")
+            return
+
+        if not self._selected_model:
+            self._refresh_models()
+            if not self._selected_model:
+                self.notify_error("Selecione um modelo")
+                return
+
+        text = self.query_one("#input-test-text", Input).value.strip()
+        if not text:
+            self.notify_error("Digite um texto")
+            return
+
+        self._is_playing = True
+        self.query_one("#btn-play", Button).disabled = True
+
+        self._log("")
+        self._log(f"[{COLORS['info']}]Gerando audio com {self._selected_model.name}...[/]")
+
+        threading.Thread(
+            target=self._run_inference,
+            args=(self._selected_model, text),
+            daemon=True
+        ).start()
+
+    def _run_inference(self, model_path: Path, text: str) -> None:
+        try:
+            output_file = model_path / "outputs" / "test_output.wav"
+            output_file.parent.mkdir(parents=True, exist_ok=True)
+
+            if model_path.name.endswith("_chatterbox"):
+                self._run_chatterbox_inference(model_path, text, output_file)
+            else:
+                self._run_coqui_inference(model_path, text, output_file)
+
+            if output_file.exists():
+                self.call_from_thread(self._log, f"[{COLORS['success']}]Audio gerado![/]")
+                self.call_from_thread(self._log, f"[{COLORS['text_muted']}]{output_file}[/]")
+                subprocess.Popen(["xdg-open", str(output_file)])
+            else:
+                self.call_from_thread(self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]")
+
+        except Exception as e:
+            self.call_from_thread(self._log, f"[{COLORS['error']}]Erro: {e}[/]")
+        finally:
+            self._is_playing = False
+            self.call_from_thread(self._enable_play_button)
+
+    def _enable_play_button(self) -> None:
+        self.query_one("#btn-play", Button).disabled = False
+
+    def _run_chatterbox_inference(self, model_path: Path, text: str, output_file: Path) -> None:
+        python_exec = str(ROOT_DIR / "venv_chatterbox" / "bin" / "python")
+        reference_audio = model_path / "reference.wav"
+
+        if not reference_audio.exists():
+            raise FileNotFoundError(f"Audio de referencia nao encontrado: {reference_audio}")
+
+        script = f'''
+import torch
+import torchaudio
+from chatterbox.tts import ChatterboxTTS
+
+model = ChatterboxTTS.from_pretrained(device="cuda" if torch.cuda.is_available() else "cpu")
+audio = model.generate(text="{text}", audio_prompt_path="{reference_audio}")
+torchaudio.save("{output_file}", audio.squeeze(0).cpu(), 24000)
+print("OK")
+'''
+        result = subprocess.run(
+            [python_exec, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
+
+    def _run_coqui_inference(self, model_path: Path, text: str, output_file: Path) -> None:
+        python_exec = str(ROOT_DIR / "venv_coqui" / "bin" / "python")
+        reference_audio = model_path / "reference_speaker.wav"
+
+        if not reference_audio.exists():
+            raise FileNotFoundError(f"Audio de referencia nao encontrado: {reference_audio}")
+
+        script = f'''
+from TTS.api import TTS
+tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+tts.tts_to_file(text="{text}", file_path="{output_file}", speaker_wav="{reference_audio}", language="pt")
+print("OK")
+'''
+        result = subprocess.run(
+            [python_exec, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=120
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
 
 
 def main():
