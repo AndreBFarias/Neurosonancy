@@ -14,7 +14,7 @@ from textual.binding import Binding
 from textual.screen import ModalScreen
 from textual.widgets import (
     Header, Footer, Static, Button, Label,
-    Input, ProgressBar, RichLog, RadioSet, RadioButton, Select, Checkbox
+    Input, ProgressBar, RichLog, RadioSet, RadioButton, Select, Checkbox, TextArea
 )
 from textual.containers import Vertical, Horizontal, VerticalScroll, Center
 from textual.reactive import reactive
@@ -237,8 +237,11 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     #input-test-text {
         width: 100%;
-        height: 3;
+        height: 5;
+        min-height: 5;
         margin-bottom: 1;
+        background: #141620;
+        border: solid #2d3250;
     }
 
     #btn-play {
@@ -590,7 +593,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
                     with Vertical(id="test-right"):
                         yield Label("Texto para sintetizar:", classes="setting-label")
-                        yield Input(placeholder="Digite o texto aqui...", id="input-test-text")
+                        yield TextArea(id="input-test-text")
                         yield Button("OUVIR", id="btn-play")
 
                 yield RichLog(id="output-log", markup=True, highlight=True, wrap=True, classes="hidden-log")
@@ -1457,7 +1460,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 self.notify_error("Selecione um modelo")
                 return
 
-        text = self.query_one("#input-test-text", Input).value.strip()
+        text = self.query_one("#input-test-text", TextArea).text.strip()
         if not text:
             self.notify_error("Digite um texto")
             return
@@ -1486,8 +1489,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
             if output_file.exists():
                 self.call_from_thread(self._log, f"[{COLORS['success']}]Audio gerado![/]")
-                self.call_from_thread(self._log, f"[{COLORS['text_muted']}]{output_file}[/]")
-                subprocess.Popen(["xdg-open", str(output_file)])
+                self.call_from_thread(self._log, f"[{COLORS['text_muted']}]Reproduzindo...[/]")
+                self._play_audio_file(output_file)
+                self.call_from_thread(self._log, f"[{COLORS['info']}]Reproducao concluida[/]")
             else:
                 self.call_from_thread(self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]")
 
@@ -1496,6 +1500,20 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         finally:
             self._is_playing = False
             self.call_from_thread(self._enable_play_button)
+
+    def _play_audio_file(self, audio_path: Path) -> None:
+        import sounddevice as sd
+        from scipy.io import wavfile
+
+        sample_rate, audio_data = wavfile.read(str(audio_path))
+
+        if audio_data.dtype == 'int16':
+            audio_data = audio_data.astype('float32') / 32768.0
+        elif audio_data.dtype == 'int32':
+            audio_data = audio_data.astype('float32') / 2147483648.0
+
+        sd.play(audio_data, sample_rate)
+        sd.wait()
 
     def _enable_play_button(self) -> None:
         self.query_one("#btn-play", Button).disabled = False
