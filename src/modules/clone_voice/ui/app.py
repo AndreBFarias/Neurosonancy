@@ -208,31 +208,29 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         overflow-y: auto;
     }
 
-    #right-bottom {
+    #test-panel {
         layout: horizontal;
         height: 45%;
-        margin-top: 1;
-    }
-
-    #output-panel {
-        width: 1fr;
-        height: 100%;
-        background: #1a1d2e;
-        border: solid #2d3250;
-        padding: 1;
-    }
-
-    #test-panel {
-        width: 1fr;
-        height: 100%;
         background: #1a1d2e;
         border: solid #f59e0b;
         padding: 1 2;
-        margin-left: 1;
+        margin-top: 1;
+    }
+
+    #test-left {
+        width: 1fr;
+        height: 100%;
+        padding-right: 1;
+    }
+
+    #test-right {
+        width: 1fr;
+        height: 100%;
+        padding-left: 1;
     }
 
     #model-selector-test {
-        height: 5;
+        height: 6;
         background: #141620;
         border: solid #2d3250;
         padding: 0;
@@ -248,6 +246,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         background: #f59e0b;
         color: #0d0f18;
         text-style: bold;
+        margin-top: 1;
     }
 
     #btn-play:hover { background: #fbbf24; }
@@ -270,8 +269,11 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     #config-panel .panel-title { color: #ec4899; }
     #generator-panel .panel-title { color: #8b5cf6; }
     #training-panel .panel-title { color: #22d3ee; }
-    #output-panel .panel-title { color: #64748b; }
     #test-panel .panel-title { color: #f59e0b; }
+
+    .hidden-log {
+        display: none;
+    }
 
     .setting-label {
         color: #94a3b8;
@@ -571,19 +573,20 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                             yield Button("CHATTERBOX", id="btn-train-chatterbox")
                             yield Button("COQUI", id="btn-train-coqui")
 
-                with Horizontal(id="right-bottom"):
-                    with Vertical(id="output-panel"):
-                        yield Static("LOG", classes="panel-title")
-                        yield RichLog(id="output-log", markup=True, highlight=True, wrap=True)
-
-                    with Vertical(id="test-panel"):
+                with Horizontal(id="test-panel"):
+                    with Vertical(id="test-left"):
                         yield Static("TESTAR", classes="panel-title")
                         yield Label("Modelo:", classes="setting-label")
                         yield OptionList(id="model-selector-test")
                         yield Button("ATUALIZAR", id="btn-refresh-models")
+
+                    with Vertical(id="test-right"):
+                        yield Static("", classes="panel-title")
                         yield Label("Texto:", classes="setting-label")
                         yield Input(placeholder="Digite o texto para sintetizar...", id="input-test-text")
                         yield Button("OUVIR", id="btn-play")
+
+                yield RichLog(id="output-log", markup=True, highlight=True, wrap=True, classes="hidden-log")
 
         yield Footer()
 
