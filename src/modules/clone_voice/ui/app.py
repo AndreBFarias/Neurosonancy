@@ -14,9 +14,8 @@ from textual.binding import Binding
 from textual.screen import ModalScreen
 from textual.widgets import (
     Header, Footer, Static, Button, Label,
-    Input, ProgressBar, RichLog, RadioSet, RadioButton, OptionList, Checkbox
+    Input, ProgressBar, RichLog, RadioSet, RadioButton, Select, Checkbox
 )
-from textual.widgets.option_list import Option
 from textual.containers import Vertical, Horizontal, VerticalScroll, Center
 from textual.reactive import reactive
 
@@ -210,35 +209,36 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     #test-panel {
         layout: horizontal;
-        height: 45%;
+        height: auto;
+        min-height: 14;
         background: #1a1d2e;
         border: solid #f59e0b;
-        padding: 1 2;
+        padding: 2 3;
         margin-top: 1;
     }
 
     #test-left {
         width: 1fr;
-        height: 100%;
-        padding-right: 1;
+        height: auto;
+        padding: 0 3 0 0;
+        border-right: solid #2d3250;
     }
 
     #test-right {
-        width: 1fr;
-        height: 100%;
-        padding-left: 1;
+        width: 2fr;
+        height: auto;
+        padding: 0 0 0 3;
     }
 
     #model-selector-test {
-        height: 6;
-        background: #141620;
-        border: solid #2d3250;
-        padding: 0;
+        width: 100%;
+        margin-bottom: 1;
     }
 
     #input-test-text {
+        width: 100%;
         height: 3;
-        margin: 1 0;
+        margin-bottom: 1;
     }
 
     #btn-play {
@@ -257,6 +257,14 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         background: #6366f1;
         color: #0d0f18;
         margin-top: 1;
+    }
+
+    Select {
+        width: 100%;
+    }
+
+    #dataset-selector {
+        width: 100%;
     }
 
     .panel-title {
@@ -558,7 +566,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     with VerticalScroll(id="training-panel"):
                         yield Static("TREINAR", classes="panel-title")
                         yield Label("Dataset:", classes="setting-label")
-                        yield OptionList(id="dataset-selector")
+                        yield Select([], id="dataset-selector", prompt="Selecione o dataset")
                         yield Button("ATUALIZAR", id="btn-refresh-datasets")
                         yield Label("Usar melhores:", classes="setting-label")
                         with Horizontal(classes="use-top-row"):
@@ -576,14 +584,13 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 with Horizontal(id="test-panel"):
                     with Vertical(id="test-left"):
                         yield Static("TESTAR", classes="panel-title")
-                        yield Label("Modelo:", classes="setting-label")
-                        yield OptionList(id="model-selector-test")
+                        yield Label("Modelo treinado:", classes="setting-label")
+                        yield Select([], id="model-selector-test", prompt="Selecione o modelo")
                         yield Button("ATUALIZAR", id="btn-refresh-models")
 
                     with Vertical(id="test-right"):
-                        yield Static("", classes="panel-title")
-                        yield Label("Texto:", classes="setting-label")
-                        yield Input(placeholder="Digite o texto para sintetizar...", id="input-test-text")
+                        yield Label("Texto para sintetizar:", classes="setting-label")
+                        yield Input(placeholder="Digite o texto aqui...", id="input-test-text")
                         yield Button("OUVIR", id="btn-play")
 
                 yield RichLog(id="output-log", markup=True, highlight=True, wrap=True, classes="hidden-log")
@@ -963,14 +970,14 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         elif button_id == "btn-play":
             self._play_test_audio()
 
-    def on_option_list_option_selected(self, event: OptionList.OptionSelected) -> None:
-        if event.option_list.id == "dataset-selector":
-            option_id = str(event.option_id)
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "dataset-selector" and event.value != Select.BLANK:
+            option_id = str(event.value)
             if option_id in self._datasets_map:
                 self._selected_dataset = self._datasets_map[option_id]
                 self._log(f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]")
-        elif event.option_list.id == "model-selector-test":
-            option_id = str(event.option_id)
+        elif event.select.id == "model-selector-test" and event.value != Select.BLANK:
+            option_id = str(event.value)
             if option_id in self._models_map:
                 self._selected_model = self._models_map[option_id]
                 self._log(f"[{COLORS['info']}]Modelo: {self._selected_model.name}[/]")
@@ -1034,11 +1041,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     def _refresh_datasets(self) -> None:
         output_dir = Path(self.query_one("#input-output-dir", Input).value.strip())
-        selector = self.query_one("#dataset-selector", OptionList)
+        selector = self.query_one("#dataset-selector", Select)
 
         if not output_dir.exists():
-            selector.clear_options()
-            selector.add_option(Option("Dir inexistente", id="none", disabled=True))
+            selector.set_options([])
             return
 
         datasets = []
@@ -1051,10 +1057,8 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     if audio_count > 0:
                         datasets.append((item, audio_count))
 
-        selector.clear_options()
-
         if not datasets:
-            selector.add_option(Option("Nenhum dataset", id="none", disabled=True))
+            selector.set_options([])
             self._selected_dataset = None
             self._datasets_map = {}
             return
@@ -1062,15 +1066,16 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         datasets.sort(key=lambda x: x[0].stat().st_mtime, reverse=True)
 
         self._datasets_map = {}
+        options = []
         for i, (ds_path, audio_count) in enumerate(datasets):
             ds_id = f"ds_{i}"
             name = ds_path.name
             label = f"{name} ({audio_count})"
-            selector.add_option(Option(label, id=ds_id))
+            options.append((label, ds_id))
             self._datasets_map[ds_id] = ds_path
 
+        selector.set_options(options)
         self._selected_dataset = datasets[0][0]
-        selector.highlighted = 0
         self._log(f"[{COLORS['success']}]Datasets encontrados: {len(datasets)}[/]")
 
     def _start_training(self, model_type: str) -> None:
@@ -1407,12 +1412,12 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     def _refresh_models(self) -> None:
         try:
-            model_list = self.query_one("#model-selector-test", OptionList)
-            model_list.clear_options()
+            model_list = self.query_one("#model-selector-test", Select)
             self._models_map.clear()
 
             trained_models_dir = DEFAULT_OUTPUT_DIR / "trained_models"
             if not trained_models_dir.exists():
+                model_list.set_options([])
                 return
 
             models = []
@@ -1420,18 +1425,20 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 if item.is_dir() and (item.name.endswith("_chatterbox") or item.name.endswith("_coqui")):
                     models.append(item)
 
+            if not models:
+                model_list.set_options([])
+                self._selected_model = None
+                return
+
             models.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
+            options = []
             for model_path in models:
                 model_id = model_path.name
                 self._models_map[model_id] = model_path
+                options.append((model_path.name, model_id))
 
-                if model_path.name.endswith("_chatterbox"):
-                    label = f"[#f97316]{model_path.name}[/]"
-                else:
-                    label = f"[#10b981]{model_path.name}[/]"
-
-                model_list.add_option(Option(label, id=model_id))
+            model_list.set_options(options)
 
             if models:
                 self._selected_model = models[0]
