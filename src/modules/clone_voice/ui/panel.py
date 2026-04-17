@@ -13,26 +13,43 @@ from textual.binding import Binding
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import (
-    Static, Button, Label, Input, ProgressBar,
-    RichLog, RadioSet, RadioButton, Select, Checkbox, TextArea
+    Static,
+    Button,
+    Label,
+    Input,
+    ProgressBar,
+    RichLog,
+    RadioSet,
+    RadioButton,
+    Select,
+    Checkbox,
+    TextArea,
 )
 from textual.containers import Vertical, Horizontal, VerticalScroll
 
 from src.core.theme import COLORS
 from src.modules.clone_voice.ui.panel_helpers import (
-    StatusPanel, TrainingCompleteModal,
-    load_saved_config, save_config,
-    run_generation_thread, run_training_thread,
-    run_chatterbox_inference, run_coqui_inference,
-    CLONE_CSS, LUNA_PHRASES_FILE, ERIS_PHRASES_FILE, DEFAULT_PHRASES_FILE,
-    DEFAULT_OUTPUT_DIR, ROOT_DIR,
+    StatusPanel,
+    TrainingCompleteModal,
+    load_saved_config,
+    save_config,
+    run_generation_thread,
+    run_training_thread,
+    run_chatterbox_inference,
+    run_coqui_inference,
+    CLONE_CSS,
+    LUNA_PHRASES_FILE,
+    LUNA_GOTHIC_PHRASES_FILE,
+    ERIS_PHRASES_FILE,
+    DEFAULT_PHRASES_FILE,
+    DEFAULT_OUTPUT_DIR,
+    ROOT_DIR,
 )
 
 logger = logging.getLogger(__name__)
 
 
 class CloneVoicePanel(Widget):
-
     BINDINGS = [
         Binding("g", "start_generation", "Gerar", show=True),
         Binding("s", "stop_generation", "Parar", show=True),
@@ -75,55 +92,96 @@ class CloneVoicePanel(Widget):
                     yield Input(placeholder="sk_xxxxxxxx...", id="clone-input-api-key")
 
                     yield Label("Voice ID:", classes="clone-setting-label")
-                    yield Input(placeholder="ID da voz no ElevenLabs", id="clone-input-voice-id")
+                    yield Input(
+                        placeholder="ID da voz no ElevenLabs", id="clone-input-voice-id"
+                    )
 
                     yield Label("Nome do Dataset:", classes="clone-setting-label")
-                    yield Input(placeholder="Ex: MinhaVoz", id="clone-input-dataset-name")
+                    yield Input(
+                        placeholder="Ex: MinhaVoz", id="clone-input-dataset-name"
+                    )
 
                     yield Label("Qtd Frases:", classes="clone-setting-label")
-                    yield Input(value="50", id="clone-input-phrase-count", type="integer")
+                    yield Input(
+                        value="50", id="clone-input-phrase-count", type="integer"
+                    )
 
                     yield Label("Modelo TTS:", classes="clone-setting-label")
                     with RadioSet(id="clone-model-selector"):
-                        yield RadioButton("Multilingual v2", id="clone-model-multi-v2", value=True)
+                        yield RadioButton(
+                            "Multilingual v2", id="clone-model-multi-v2", value=True
+                        )
                         yield RadioButton("Turbo v2.5", id="clone-model-turbo")
                         yield RadioButton("Flash v2", id="clone-model-flash")
 
                     yield Static("", classes="clone-section-separator")
 
                     yield Label("Arquivo de Frases:", classes="clone-setting-label")
-                    yield Input(placeholder="Caminho do arquivo .md", id="clone-input-phrases-file")
+                    yield Input(
+                        placeholder="Caminho do arquivo .md",
+                        id="clone-input-phrases-file",
+                    )
                     yield Button("PROCURAR", id="clone-btn-browse")
                     yield Label("", id="clone-file-status", classes="clone-file-hint")
 
                     yield Label("Diretorio Saida:", classes="clone-setting-label")
-                    yield Input(value=str(DEFAULT_OUTPUT_DIR), id="clone-input-output-dir")
+                    yield Input(
+                        value=str(DEFAULT_OUTPUT_DIR), id="clone-input-output-dir"
+                    )
 
             with Vertical(id="clone-right-column"):
                 with Horizontal(id="clone-right-top"):
                     with Vertical(id="clone-generator-panel"):
                         yield Static("GERADOR", classes="clone-panel-title")
                         yield StatusPanel(id="clone-status-indicator")
-                        yield Static("0 / 50 frases", id="clone-counter-display", classes="clone-counter-display")
-                        yield ProgressBar(id="clone-generation-progress", total=100, show_eta=False)
-                        yield Static("", id="clone-current-phrase", classes="clone-current-phrase")
+                        yield Static(
+                            "0 / 50 frases",
+                            id="clone-counter-display",
+                            classes="clone-counter-display",
+                        )
+                        yield ProgressBar(
+                            id="clone-generation-progress", total=100, show_eta=False
+                        )
+                        yield Static(
+                            "",
+                            id="clone-current-phrase",
+                            classes="clone-current-phrase",
+                        )
                         yield Button("INICIAR", id="clone-btn-generate")
                         yield Button("PARAR", id="clone-btn-stop", disabled=True)
 
                     with VerticalScroll(id="clone-training-panel"):
                         yield Static("TREINAR", classes="clone-panel-title")
                         yield Label("Dataset:", classes="clone-setting-label")
-                        yield Select([], id="clone-dataset-selector", prompt="Selecione o dataset")
+                        yield Select(
+                            [],
+                            id="clone-dataset-selector",
+                            prompt="Selecione o dataset",
+                        )
                         yield Button("ATUALIZAR", id="clone-btn-refresh-datasets")
                         yield Label("Usar melhores:", classes="clone-setting-label")
                         with Horizontal(classes="clone-use-top-row"):
-                            yield Checkbox("TOP", id="clone-use-top-checkbox", value=True)
-                            yield Input(value="10", id="clone-input-top-n", type="integer")
+                            yield Checkbox(
+                                "TOP", id="clone-use-top-checkbox", value=True
+                            )
+                            yield Input(
+                                value="10", id="clone-input-top-n", type="integer"
+                            )
                         yield Label("Epochs (Coqui):", classes="clone-setting-label")
-                        yield Input(value="100", id="clone-input-epochs", type="integer")
-                        yield ProgressBar(id="clone-training-progress", total=100, show_eta=False)
-                        yield Static("[dim]Chatterbox: zero-shot (embeddings)[/]", classes="clone-model-hint")
-                        yield Static("[dim]Coqui: fine-tuning real (lento)[/]", classes="clone-model-hint")
+                        yield Input(
+                            value="100", id="clone-input-epochs", type="integer"
+                        )
+                        yield ProgressBar(
+                            id="clone-training-progress", total=100, show_eta=False
+                        )
+                        yield Static(
+                            "[dim]Chatterbox: zero-shot (embeddings)[/]",
+                            classes="clone-model-hint",
+                        )
+                        yield Static(
+                            "[dim]Coqui: fine-tuning real (lento)[/]",
+                            classes="clone-model-hint",
+                        )
                         with Horizontal(classes="clone-train-buttons"):
                             yield Button("CHATTERBOX", id="clone-btn-train-chatterbox")
                             yield Button("COQUI", id="clone-btn-train-coqui")
@@ -132,19 +190,33 @@ class CloneVoicePanel(Widget):
                     with Vertical(id="clone-test-left"):
                         yield Static("TESTAR", classes="clone-panel-title")
                         yield Label("Modelo treinado:", classes="clone-setting-label")
-                        yield Select([], id="clone-model-selector-test", prompt="Selecione o modelo")
+                        yield Select(
+                            [],
+                            id="clone-model-selector-test",
+                            prompt="Selecione o modelo",
+                        )
                         yield Button("ATUALIZAR", id="clone-btn-refresh-models")
 
                     with Vertical(id="clone-test-right"):
-                        yield Label("Texto para sintetizar:", classes="clone-setting-label")
+                        yield Label(
+                            "Texto para sintetizar:", classes="clone-setting-label"
+                        )
                         yield TextArea(id="clone-input-test-text")
                         yield Button("OUVIR", id="clone-btn-play")
 
-                yield RichLog(id="clone-output-log", markup=True, highlight=True, wrap=True, classes="hidden-log")
+                yield RichLog(
+                    id="clone-output-log",
+                    markup=True,
+                    highlight=True,
+                    wrap=True,
+                    classes="hidden-log",
+                )
 
     def on_mount(self) -> None:
         self._log(f"[bold {COLORS['accent_primary']}]Clone Voice Dataset Generator[/]")
-        self._log(f"[{COLORS['text_muted']}]Gera datasets de voz via ElevenLabs para treinar modelos TTS[/]")
+        self._log(
+            f"[{COLORS['text_muted']}]Gera datasets de voz via ElevenLabs para treinar modelos TTS[/]"
+        )
         self._log("")
 
         self._load_saved_settings()
@@ -153,6 +225,10 @@ class CloneVoicePanel(Widget):
 
         if LUNA_PHRASES_FILE.exists():
             self._log(f"[{COLORS['success']}]LUNA: {LUNA_PHRASES_FILE.name}[/]")
+        if LUNA_GOTHIC_PHRASES_FILE.exists():
+            self._log(
+                f"[{COLORS['success']}]LUNA GOTHIC: {LUNA_GOTHIC_PHRASES_FILE.name}[/]"
+            )
         if ERIS_PHRASES_FILE.exists():
             self._log(f"[#ff5555]ERIS: {ERIS_PHRASES_FILE.name}[/]")
         if DEFAULT_PHRASES_FILE.exists():
@@ -184,13 +260,21 @@ class CloneVoicePanel(Widget):
             if cfg.get("voice_id"):
                 self.query_one("#clone-input-voice-id", Input).value = cfg["voice_id"]
             if cfg.get("dataset_name"):
-                self.query_one("#clone-input-dataset-name", Input).value = cfg["dataset_name"]
+                self.query_one("#clone-input-dataset-name", Input).value = cfg[
+                    "dataset_name"
+                ]
             if cfg.get("phrase_count"):
-                self.query_one("#clone-input-phrase-count", Input).value = str(cfg["phrase_count"])
+                self.query_one("#clone-input-phrase-count", Input).value = str(
+                    cfg["phrase_count"]
+                )
             if cfg.get("phrases_file"):
-                self.query_one("#clone-input-phrases-file", Input).value = cfg["phrases_file"]
+                self.query_one("#clone-input-phrases-file", Input).value = cfg[
+                    "phrases_file"
+                ]
             if cfg.get("output_dir"):
-                self.query_one("#clone-input-output-dir", Input).value = cfg["output_dir"]
+                self.query_one("#clone-input-output-dir", Input).value = cfg[
+                    "output_dir"
+                ]
 
             model_id = cfg.get("model_id", "eleven_multilingual_v2")
             if model_id == "eleven_turbo_v2_5":
@@ -208,12 +292,22 @@ class CloneVoicePanel(Widget):
         try:
             cfg = {
                 "api_key": self.query_one("#clone-input-api-key", Input).value.strip(),
-                "voice_id": self.query_one("#clone-input-voice-id", Input).value.strip(),
-                "dataset_name": self.query_one("#clone-input-dataset-name", Input).value.strip(),
-                "phrase_count": self.query_one("#clone-input-phrase-count", Input).value.strip(),
+                "voice_id": self.query_one(
+                    "#clone-input-voice-id", Input
+                ).value.strip(),
+                "dataset_name": self.query_one(
+                    "#clone-input-dataset-name", Input
+                ).value.strip(),
+                "phrase_count": self.query_one(
+                    "#clone-input-phrase-count", Input
+                ).value.strip(),
                 "model_id": self._get_model_id(),
-                "phrases_file": self.query_one("#clone-input-phrases-file", Input).value.strip(),
-                "output_dir": self.query_one("#clone-input-output-dir", Input).value.strip(),
+                "phrases_file": self.query_one(
+                    "#clone-input-phrases-file", Input
+                ).value.strip(),
+                "output_dir": self.query_one(
+                    "#clone-input-output-dir", Input
+                ).value.strip(),
             }
             save_config(cfg)
             self._config_dirty = False
@@ -228,8 +322,7 @@ class CloneVoicePanel(Widget):
         if self._save_timer:
             self._save_timer.stop()
         self._save_timer = self.set_timer(
-            self.SAVE_DEBOUNCE_MS / 1000,
-            self._execute_save
+            self.SAVE_DEBOUNCE_MS / 1000, self._execute_save
         )
 
     def _execute_save(self) -> None:
@@ -247,8 +340,12 @@ class CloneVoicePanel(Widget):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         tracked_ids = {
-            "clone-input-api-key", "clone-input-voice-id", "clone-input-dataset-name",
-            "clone-input-phrase-count", "clone-input-phrases-file", "clone-input-output-dir"
+            "clone-input-api-key",
+            "clone-input-voice-id",
+            "clone-input-dataset-name",
+            "clone-input-phrase-count",
+            "clone-input-phrases-file",
+            "clone-input-output-dir",
         }
         if event.input.id in tracked_ids:
             self._schedule_save()
@@ -310,6 +407,7 @@ class CloneVoicePanel(Widget):
         if action in controlled:
             try:
                 from textual.widgets import ContentSwitcher
+
                 switcher = self.app.query_one(ContentSwitcher)
                 return switcher.current == "panel-clone"
             except Exception:
@@ -327,6 +425,7 @@ class CloneVoicePanel(Widget):
     def _set_sidebar_status(self, status: str | None) -> None:
         try:
             from src.core.widgets.nav_sidebar import NavSidebar
+
             self.app.query_one(NavSidebar).set_module_status("clone", status)
         except Exception:
             pass
@@ -345,7 +444,9 @@ class CloneVoicePanel(Widget):
 
         if not self._validate_api_key(api_key):
             self.app.notify("API Key invalida", severity="error")
-            self._log(f"[{COLORS['error']}]Formato de API Key invalido (deve comecar com sk_)[/]")
+            self._log(
+                f"[{COLORS['error']}]Formato de API Key invalido (deve comecar com sk_)[/]"
+            )
             return
 
         voice_id = self.query_one("#clone-input-voice-id", Input).value.strip()
@@ -355,7 +456,9 @@ class CloneVoicePanel(Widget):
             return
 
         try:
-            self.target_phrases = int(self.query_one("#clone-input-phrase-count", Input).value)
+            self.target_phrases = int(
+                self.query_one("#clone-input-phrase-count", Input).value
+            )
         except ValueError:
             self.app.notify("Quantidade invalida", severity="error")
             return
@@ -364,8 +467,12 @@ class CloneVoicePanel(Widget):
         if not dataset_name:
             dataset_name = f"voice_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
-        phrases_file = Path(self.query_one("#clone-input-phrases-file", Input).value.strip())
-        output_dir = Path(self.query_one("#clone-input-output-dir", Input).value.strip())
+        phrases_file = Path(
+            self.query_one("#clone-input-phrases-file", Input).value.strip()
+        )
+        output_dir = Path(
+            self.query_one("#clone-input-output-dir", Input).value.strip()
+        )
         model_id = self._get_model_id()
 
         self.is_generating = True
@@ -382,8 +489,16 @@ class CloneVoicePanel(Widget):
 
         self._generation_thread = threading.Thread(
             target=run_generation_thread,
-            args=(self, api_key, voice_id, dataset_name, model_id, phrases_file, output_dir),
-            daemon=True
+            args=(
+                self,
+                api_key,
+                voice_id,
+                dataset_name,
+                model_id,
+                phrases_file,
+                output_dir,
+            ),
+            daemon=True,
         )
         self._generation_thread.start()
 
@@ -401,7 +516,7 @@ class CloneVoicePanel(Widget):
 
     def _on_phrase_generated(self, index: int, phrase: str, audio_path: Path) -> None:
         short_phrase = phrase[:35] + "..." if len(phrase) > 35 else phrase
-        self._log(f"[{COLORS['success']}][{index+1}][/] {short_phrase}")
+        self._log(f"[{COLORS['success']}][{index + 1}][/] {short_phrase}")
 
     def _on_generation_error(self, error: str) -> None:
         self._log(f"[{COLORS['error']}]Erro: {error}[/]")
@@ -421,7 +536,9 @@ class CloneVoicePanel(Widget):
         self._set_status("stopped")
         self.query_one("#clone-btn-generate", Button).disabled = False
         self.query_one("#clone-btn-stop", Button).disabled = True
-        self._log(f"[{COLORS['warning']}]Interrompido: {stats.total_generated}/{stats.total_requested}[/]")
+        self._log(
+            f"[{COLORS['warning']}]Interrompido: {stats.total_generated}/{stats.total_requested}[/]"
+        )
         self.app.notify("Geracao interrompida", severity="warning")
 
     def _on_generation_complete(self, stats) -> None:
@@ -445,7 +562,9 @@ class CloneVoicePanel(Widget):
             full_path = output_dir / f"{dataset_name}_{timestamp}"
             self._log(f"[{COLORS['neon_cyan']}]{full_path}[/]")
 
-        self.app.notify(f"Dataset: {stats.total_generated} amostras", severity="information")
+        self.app.notify(
+            f"Dataset: {stats.total_generated} amostras", severity="information"
+        )
 
     def _set_dataset_manager(self, manager) -> None:
         self._dataset_manager = manager
@@ -482,8 +601,13 @@ class CloneVoicePanel(Widget):
             option_id = str(event.value)
             if option_id in self._datasets_map:
                 self._selected_dataset = self._datasets_map[option_id]
-                self._log(f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]")
-        elif event.select.id == "clone-model-selector-test" and event.value != Select.BLANK:
+                self._log(
+                    f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]"
+                )
+        elif (
+            event.select.id == "clone-model-selector-test"
+            and event.value != Select.BLANK
+        ):
             option_id = str(event.value)
             if option_id in self._models_map:
                 self._selected_model = self._models_map[option_id]
@@ -493,14 +617,15 @@ class CloneVoicePanel(Widget):
         try:
             result = subprocess.run(
                 [
-                    "zenity", "--file-selection",
+                    "zenity",
+                    "--file-selection",
                     "--title=Selecionar Arquivo de Frases",
                     "--file-filter=Markdown (*.md) | *.md",
                     "--file-filter=Texto (*.txt) | *.txt",
-                    "--file-filter=Todos (*) | *"
+                    "--file-filter=Todos (*) | *",
                 ],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
                 self._set_phrases_file(Path(result.stdout.strip()))
@@ -512,12 +637,17 @@ class CloneVoicePanel(Widget):
         status_label = self.query_one("#clone-file-status", Label)
         if filepath.exists():
             from src.modules.clone_voice.core.generator import PhraseParser
+
             parser = PhraseParser()
             if parser.parse_file(filepath):
                 stats = parser.get_stats()
                 categories = len(parser.get_category_names())
-                status_label.update(f"[{COLORS['success']}]{stats['total']} frases, {categories} cats[/]")
-                self._log(f"[{COLORS['success']}]{filepath.name}: {stats['total']} frases[/]")
+                status_label.update(
+                    f"[{COLORS['success']}]{stats['total']} frases, {categories} cats[/]"
+                )
+                self._log(
+                    f"[{COLORS['success']}]{filepath.name}: {stats['total']} frases[/]"
+                )
             else:
                 status_label.update(f"[{COLORS['error']}]Arquivo vazio[/]")
         else:
@@ -530,10 +660,13 @@ class CloneVoicePanel(Widget):
             filepath = Path(current_file)
             if filepath.exists():
                 from src.modules.clone_voice.core.generator import PhraseParser
+
                 parser = PhraseParser()
                 if parser.parse_file(filepath):
                     stats = parser.get_stats()
-                    status_label.update(f"[{COLORS['success']}]{stats['total']} frases[/]")
+                    status_label.update(
+                        f"[{COLORS['success']}]{stats['total']} frases[/]"
+                    )
                 else:
                     status_label.update(f"[{COLORS['warning']}]Arquivo vazio[/]")
             else:
@@ -542,7 +675,9 @@ class CloneVoicePanel(Widget):
             status_label.update(f"[{COLORS['text_muted']}]Selecione um arquivo[/]")
 
     def _refresh_datasets(self) -> None:
-        output_dir = Path(self.query_one("#clone-input-output-dir", Input).value.strip())
+        output_dir = Path(
+            self.query_one("#clone-input-output-dir", Input).value.strip()
+        )
         selector = self.query_one("#clone-dataset-selector", Select)
 
         if not output_dir.exists():
@@ -555,7 +690,9 @@ class CloneVoicePanel(Widget):
                 metadata = item / "metadata.json"
                 wavs_dir = item / "wavs"
                 if metadata.exists() and wavs_dir.exists():
-                    audio_count = len(list(wavs_dir.glob("*.mp3"))) + len(list(wavs_dir.glob("*.wav")))
+                    audio_count = len(list(wavs_dir.glob("*.mp3"))) + len(
+                        list(wavs_dir.glob("*.wav"))
+                    )
                     if audio_count > 0:
                         datasets.append((item, audio_count))
 
@@ -612,15 +749,27 @@ class CloneVoicePanel(Widget):
         self._log("")
         self._log(f"[{COLORS['info']}]Treinar {model_type.upper()}...[/]")
         if use_top:
-            self._log(f"[{COLORS['text_muted']}]Usando TOP {top_n} audios de {self._selected_dataset.name}[/]")
+            self._log(
+                f"[{COLORS['text_muted']}]Usando TOP {top_n} audios de {self._selected_dataset.name}[/]"
+            )
         else:
-            self._log(f"[{COLORS['text_muted']}]Usando todos audios de {self._selected_dataset.name}[/]")
+            self._log(
+                f"[{COLORS['text_muted']}]Usando todos audios de {self._selected_dataset.name}[/]"
+            )
         self._log(f"[{COLORS['text_muted']}]Epochs: {epochs}[/]")
 
         self._training_thread = threading.Thread(
             target=run_training_thread,
-            args=(self, model_type, self._selected_dataset, output_dir, epochs, use_top, top_n),
-            daemon=True
+            args=(
+                self,
+                model_type,
+                self._selected_dataset,
+                output_dir,
+                epochs,
+                use_top,
+                top_n,
+            ),
+            daemon=True,
         )
         self._training_thread.start()
 
@@ -654,7 +803,9 @@ class CloneVoicePanel(Widget):
             if stats.output_path:
                 self._last_output_dir = stats.output_path
                 self._log(f"[{COLORS['neon_cyan']}]{stats.output_path}[/]")
-                self.app.push_screen(TrainingCompleteModal(stats.output_path, stats.model_type))
+                self.app.push_screen(
+                    TrainingCompleteModal(stats.output_path, stats.model_type)
+                )
             self.app.notify("Treinamento concluido", severity="information")
         else:
             self._log(f"[{COLORS['warning']}]Treinamento interrompido[/]")
@@ -682,10 +833,10 @@ class CloneVoicePanel(Widget):
                 return
 
             models = [
-                item for item in trained_models_dir.iterdir()
-                if item.is_dir() and (
-                    item.name.endswith("_chatterbox") or item.name.endswith("_coqui")
-                )
+                item
+                for item in trained_models_dir.iterdir()
+                if item.is_dir()
+                and (item.name.endswith("_chatterbox") or item.name.endswith("_coqui"))
             ]
 
             if not models:
@@ -726,12 +877,12 @@ class CloneVoicePanel(Widget):
         self.query_one("#clone-btn-play", Button).disabled = True
 
         self._log("")
-        self._log(f"[{COLORS['info']}]Gerando audio com {self._selected_model.name}...[/]")
+        self._log(
+            f"[{COLORS['info']}]Gerando audio com {self._selected_model.name}...[/]"
+        )
 
         threading.Thread(
-            target=self._run_inference,
-            args=(self._selected_model, text),
-            daemon=True
+            target=self._run_inference, args=(self._selected_model, text), daemon=True
         ).start()
 
     def _run_inference(self, model_path: Path, text: str) -> None:
@@ -745,12 +896,20 @@ class CloneVoicePanel(Widget):
                 run_coqui_inference(model_path, text, output_file, ROOT_DIR)
 
             if output_file.exists():
-                self.call_from_thread(self._log, f"[{COLORS['success']}]Audio gerado![/]")
-                self.call_from_thread(self._log, f"[{COLORS['text_muted']}]Reproduzindo...[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['success']}]Audio gerado![/]"
+                )
+                self.call_from_thread(
+                    self._log, f"[{COLORS['text_muted']}]Reproduzindo...[/]"
+                )
                 self._play_audio_file(output_file)
-                self.call_from_thread(self._log, f"[{COLORS['info']}]Reproducao concluida[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['info']}]Reproducao concluida[/]"
+                )
             else:
-                self.call_from_thread(self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]"
+                )
 
         except Exception as e:
             self.call_from_thread(self._log, f"[{COLORS['error']}]Erro: {e}[/]")
@@ -761,11 +920,12 @@ class CloneVoicePanel(Widget):
     def _play_audio_file(self, audio_path: Path) -> None:
         import sounddevice as sd
         from scipy.io import wavfile
+
         sample_rate, audio_data = wavfile.read(str(audio_path))
-        if audio_data.dtype == 'int16':
-            audio_data = audio_data.astype('float32') / 32768.0
-        elif audio_data.dtype == 'int32':
-            audio_data = audio_data.astype('float32') / 2147483648.0
+        if audio_data.dtype == "int16":
+            audio_data = audio_data.astype("float32") / 32768.0
+        elif audio_data.dtype == "int32":
+            audio_data = audio_data.astype("float32") / 2147483648.0
         sd.play(audio_data, sample_rate)
         sd.wait()
 

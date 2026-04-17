@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import wave
 import json
 import logging
 import struct
@@ -49,7 +48,6 @@ class AudioAnalysisResult:
 
 
 class AudioQualityAnalyzer:
-
     IDEAL_DURATION_MIN = 3.0
     IDEAL_DURATION_MAX = 12.0
     IDEAL_SAMPLE_RATE = 44100
@@ -80,7 +78,9 @@ class AudioQualityAnalyzer:
             result.errors.append("Diretorio wavs/ nao encontrado")
             return result
 
-        audio_files = sorted(list(wavs_dir.glob("*.mp3")) + list(wavs_dir.glob("*.wav")))
+        audio_files = sorted(
+            list(wavs_dir.glob("*.mp3")) + list(wavs_dir.glob("*.wav"))
+        )
         result.total_files = len(audio_files)
 
         if result.total_files == 0:
@@ -105,7 +105,9 @@ class AudioQualityAnalyzer:
                 logger.warning(f"Erro ao analisar {audio_path.name}: {e}")
 
         if result.analyzed_files > 0:
-            result.avg_duration_seconds = result.total_duration_seconds / result.analyzed_files
+            result.avg_duration_seconds = (
+                result.total_duration_seconds / result.analyzed_files
+            )
             total_score = sum(m.quality_score for m in self.metrics)
             result.avg_quality_score = total_score / result.analyzed_files
 
@@ -114,11 +116,13 @@ class AudioQualityAnalyzer:
 
         return result
 
-    def _analyze_file(self, audio_path: Path, transcripts_dir: Path) -> Optional[AudioMetrics]:
+    def _analyze_file(
+        self, audio_path: Path, transcripts_dir: Path
+    ) -> Optional[AudioMetrics]:
         try:
             from pydub import AudioSegment
 
-            if audio_path.suffix.lower() == '.mp3':
+            if audio_path.suffix.lower() == ".mp3":
                 audio = AudioSegment.from_mp3(str(audio_path))
             else:
                 audio = AudioSegment.from_wav(str(audio_path))
@@ -139,7 +143,7 @@ class AudioQualityAnalyzer:
             char_count = 0
             transcript_path = transcripts_dir / f"{audio_path.stem}.txt"
             if transcript_path.exists():
-                transcript = transcript_path.read_text(encoding='utf-8').strip()
+                transcript = transcript_path.read_text(encoding="utf-8").strip()
                 char_count = len(transcript)
 
             return AudioMetrics(
@@ -180,12 +184,14 @@ class AudioQualityAnalyzer:
 
         samples_normalized = [s / max_val for s in samples]
 
-        sum_squares = sum(s ** 2 for s in samples_normalized)
+        sum_squares = sum(s**2 for s in samples_normalized)
         rms = (sum_squares / len(samples_normalized)) ** 0.5
 
         peak = max(abs(s) for s in samples_normalized)
 
-        silence_count = sum(1 for s in samples_normalized if abs(s) < self.SILENCE_THRESHOLD)
+        silence_count = sum(
+            1 for s in samples_normalized if abs(s) < self.SILENCE_THRESHOLD
+        )
         silence_ratio = silence_count / len(samples_normalized)
 
         return rms, peak, silence_ratio
@@ -226,9 +232,7 @@ class AudioQualityAnalyzer:
 
     def get_top_audios(self, n: int = 10) -> List[AudioMetrics]:
         sorted_metrics = sorted(
-            self.metrics,
-            key=lambda m: m.quality_score,
-            reverse=True
+            self.metrics, key=lambda m: m.quality_score, reverse=True
         )
         return sorted_metrics[:n]
 
@@ -237,9 +241,7 @@ class AudioQualityAnalyzer:
             return self.metrics
 
         sorted_metrics = sorted(
-            self.metrics,
-            key=lambda m: m.quality_score,
-            reverse=True
+            self.metrics, key=lambda m: m.quality_score, reverse=True
         )
 
         selected = []
@@ -273,10 +275,7 @@ class AudioQualityAnalyzer:
         return sorted(selected, key=lambda m: m.quality_score, reverse=True)
 
     def export_selection(
-        self,
-        selection: List[AudioMetrics],
-        output_path: Path,
-        format_type: str = "all"
+        self, selection: List[AudioMetrics], output_path: Path, format_type: str = "all"
     ) -> Dict[str, Path]:
         output_path.mkdir(parents=True, exist_ok=True)
         result = {}
@@ -285,37 +284,43 @@ class AudioQualityAnalyzer:
             "created_at": datetime.now().isoformat(),
             "total_selected": len(selection),
             "total_duration_seconds": sum(m.duration_seconds for m in selection),
-            "avg_quality_score": sum(m.quality_score for m in selection) / len(selection) if selection else 0,
+            "avg_quality_score": sum(m.quality_score for m in selection)
+            / len(selection)
+            if selection
+            else 0,
             "files": [m.to_dict() for m in selection],
         }
 
         info_path = output_path / "selection_info.json"
-        with open(info_path, 'w', encoding='utf-8') as f:
+        with open(info_path, "w", encoding="utf-8") as f:
             json.dump(selection_info, f, indent=2, ensure_ascii=False)
         result["info"] = info_path
 
         if format_type in ["all", "coqui"]:
             csv_path = output_path / "metadata.csv"
-            with open(csv_path, 'w', encoding='utf-8') as f:
+            with open(csv_path, "w", encoding="utf-8") as f:
                 for m in selection:
-                    audio_name = m.file_name.replace('.mp3', '').replace('.wav', '')
-                    phrase_clean = m.transcript.replace('|', ' ').replace('\n', ' ')
+                    audio_name = m.file_name.replace(".mp3", "").replace(".wav", "")
+                    phrase_clean = m.transcript.replace("|", " ").replace("\n", " ")
                     f.write(f"{audio_name}|{phrase_clean}|{phrase_clean}\n")
             result["coqui_csv"] = csv_path
 
         if format_type in ["all", "chatterbox"]:
             jsonl_path = output_path / "chatterbox_data.jsonl"
-            with open(jsonl_path, 'w', encoding='utf-8') as f:
+            with open(jsonl_path, "w", encoding="utf-8") as f:
                 for m in selection:
-                    line = json.dumps({
-                        "audio_path": f"wavs/{m.file_name}",
-                        "text": m.transcript,
-                    }, ensure_ascii=False)
+                    line = json.dumps(
+                        {
+                            "audio_path": f"wavs/{m.file_name}",
+                            "text": m.transcript,
+                        },
+                        ensure_ascii=False,
+                    )
                     f.write(line + "\n")
             result["chatterbox_jsonl"] = jsonl_path
 
         file_list_path = output_path / "selected_files.txt"
-        with open(file_list_path, 'w', encoding='utf-8') as f:
+        with open(file_list_path, "w", encoding="utf-8") as f:
             for m in selection:
                 f.write(f"{m.file_name}\n")
         result["file_list"] = file_list_path
@@ -339,7 +344,7 @@ class AudioQualityAnalyzer:
             silence = AudioSegment.silent(duration=silence_between_ms)
 
             for i, m in enumerate(selection):
-                if m.file_path.suffix.lower() == '.mp3':
+                if m.file_path.suffix.lower() == ".mp3":
                     audio = AudioSegment.from_mp3(str(m.file_path))
                 else:
                     audio = AudioSegment.from_wav(str(m.file_path))
@@ -357,11 +362,13 @@ class AudioQualityAnalyzer:
             combined.export(
                 str(unified_path),
                 format="wav",
-                parameters=["-ar", str(target_sample_rate), "-ac", "1"]
+                parameters=["-ar", str(target_sample_rate), "-ac", "1"],
             )
 
             total_duration = len(combined) / 1000.0
-            logger.info(f"Audio unificado criado: {unified_path.name} ({total_duration:.1f}s)")
+            logger.info(
+                f"Audio unificado criado: {unified_path.name} ({total_duration:.1f}s)"
+            )
 
             return unified_path
 

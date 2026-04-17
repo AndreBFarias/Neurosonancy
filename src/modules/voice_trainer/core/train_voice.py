@@ -8,15 +8,16 @@ import sys
 import os
 from pathlib import Path
 
+
 def check_dependencies():
     missing = []
     try:
-        import librosa
+        import librosa  # noqa: F401
     except ImportError:
         missing.append("librosa")
 
     try:
-        import soundfile
+        import soundfile  # noqa: F401
     except ImportError:
         missing.append("soundfile")
 
@@ -24,6 +25,7 @@ def check_dependencies():
         print("\n DEPENDÊNCIAS FALTANDO\n")
         print(f"Instale com: pip install {' '.join(missing)}")
         sys.exit(1)
+
 
 def prepare_audio(input_file, output_file):
     import librosa
@@ -39,31 +41,33 @@ def prepare_audio(input_file, output_file):
         print(f"    AVISO: Áudio muito curto ({duration:.1f}s). Recomendado: 10-60s")
     elif duration > 60:
         print(f"    Áudio longo ({duration:.1f}s), cortando para 60s")
-        audio = audio[:60 * sr]
+        audio = audio[: 60 * sr]
 
-    print(f"\n[2/3]  Processando áudio...")
+    print("\n[2/3]  Processando áudio...")
 
     audio_trimmed, _ = librosa.effects.trim(audio, top_db=20)
-    print(f"   Silêncio removido")
+    print("   Silêncio removido")
 
     try:
         import noisereduce as nr
+
         audio_clean = nr.reduce_noise(y=audio_trimmed, sr=sr)
-        print(f"   Ruído reduzido")
+        print("   Ruído reduzido")
     except ImportError:
-        print(f"    noisereduce não instalado, pulando limpeza")
+        print("    noisereduce não instalado, pulando limpeza")
         audio_clean = audio_trimmed
 
     audio_normalized = librosa.util.normalize(audio_clean)
-    print(f"   Volume normalizado")
+    print("   Volume normalizado")
 
     sf.write(output_file, audio_normalized, sr)
     print(f"   Salvo: {output_file}")
 
     return output_file
 
+
 def setup_coqui():
-    print(f"\n[3/3]  Configurando Coqui TTS...")
+    print("\n[3/3]  Configurando Coqui TTS...")
 
     try:
         from TTS.api import TTS
@@ -81,37 +85,36 @@ def setup_coqui():
         print("    Usando CPU (lento). GPU recomendado.")
 
     try:
-        print(f"  Carregando modelo XTTS v2...")
+        print("  Carregando modelo XTTS v2...")
         tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
-        print(f"   Modelo carregado")
+        print("   Modelo carregado")
         return tts
     except Exception as e:
         print(f"   Erro: {e}")
         return None
 
+
 def test_voice(tts, reference_audio):
-    print(f"\n TESTANDO VOZ...")
+    print("\n TESTANDO VOZ...")
 
     test_text = "Olá, eu sou Luna. Esta é minha nova voz personalizada."
     output = "teste_voz_luna.wav"
 
     try:
-        print(f"  Gerando áudio de teste...")
+        print("  Gerando áudio de teste...")
         tts.tts_to_file(
-            text=test_text,
-            file_path=output,
-            speaker_wav=reference_audio,
-            language="pt"
+            text=test_text, file_path=output, speaker_wav=reference_audio, language="pt"
         )
         print(f"\n TESTE GERADO: {output}")
-        print(f"  Ouça o arquivo para verificar a qualidade!")
+        print("  Ouça o arquivo para verificar a qualidade!")
         return True
     except Exception as e:
         print(f"   Erro ao gerar teste: {e}")
         return False
 
+
 def integrate_with_luna(reference_audio):
-    print(f"\n INTEGRANDO COM LUNA...")
+    print("\n INTEGRANDO COM LUNA...")
 
     assets_dir = Path("src/assets/voice")
     assets_dir.mkdir(parents=True, exist_ok=True)
@@ -119,6 +122,7 @@ def integrate_with_luna(reference_audio):
     target = assets_dir / "luna_reference.wav"
 
     import shutil
+
     shutil.copy(reference_audio, target)
 
     print(f"   Copiado para: {target}")
@@ -136,6 +140,7 @@ def integrate_with_luna(reference_audio):
     print("  - Use áudio mais longo (30-60s)")
     print("  - Fale de forma natural e clara")
     print()
+
 
 def main():
     if len(sys.argv) < 2:
@@ -174,8 +179,10 @@ def main():
         target = assets_dir / "luna_reference.wav"
 
         import shutil
+
         shutil.copy(prepared_audio, target)
         print(f"   Copiado para: {target}")
+
 
 if __name__ == "__main__":
     try:
@@ -186,5 +193,6 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n Erro: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

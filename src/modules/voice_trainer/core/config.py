@@ -22,13 +22,17 @@ ELEVENLABS_MODEL_ID = os.getenv("ELEVENLABS_MODEL_ID", "eleven_multilingual_v2")
 ELEVENLABS_OUTPUT_FORMAT = os.getenv("ELEVENLABS_OUTPUT_FORMAT", "mp3_44100_128")
 
 TTS_ENGINE = os.getenv("TTS_ENGINE", "coqui")
-COQUI_MODEL_NAME = os.getenv("COQUI_MODEL_NAME", "tts_models/multilingual/multi-dataset/xtts_v2")
+COQUI_MODEL_NAME = os.getenv(
+    "COQUI_MODEL_NAME", "tts_models/multilingual/multi-dataset/xtts_v2"
+)
 COQUI_DEVICE = os.getenv("COQUI_DEVICE", "cuda")
 
 AUDIO_CONFIG = {
     "SAMPLE_RATE": int(os.getenv("AUDIO_SAMPLE_RATE", "16000")),
     "CHANNELS": int(os.getenv("AUDIO_CHANNELS", "1")),
-    "DEVICE_ID": int(os.getenv("AUDIO_DEVICE_ID", "9")) if os.getenv("AUDIO_DEVICE_ID") else None,
+    "DEVICE_ID": int(os.getenv("AUDIO_DEVICE_ID", "9"))
+    if os.getenv("AUDIO_DEVICE_ID")
+    else None,
     "DURATION": float(os.getenv("RECORDING_DURATION", "5.0")),
 }
 
@@ -236,4 +240,3 @@ PHRASES_LEVEL_HIGH = [
 ]
 
 TRAINING_PHRASES = PHRASES_BASELINE
-

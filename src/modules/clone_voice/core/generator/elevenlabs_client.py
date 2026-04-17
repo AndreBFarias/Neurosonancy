@@ -29,7 +29,6 @@ class VoiceSettings:
 
 
 class ElevenLabsClient:
-
     MODELS = {
         "eleven_multilingual_v2": "Multilingual v2 (Recomendado)",
         "eleven_turbo_v2_5": "Turbo v2.5 (Rapido)",
@@ -39,16 +38,30 @@ class ElevenLabsClient:
     }
 
     DEFAULT_MODEL = "eleven_multilingual_v2"
+    NORMALIZE_TARGET_DBFS = -16.0
+    MODELS_WITH_LANGUAGE_CODE = {
+        "eleven_turbo_v2_5",
+        "eleven_flash_v2",
+        "eleven_flash_v2_5",
+    }
+    LANGUAGE_CODE_MAP = {
+        "pt-BR": "pt",
+        "pt-PT": "pt",
+        "en-US": "en",
+        "en-GB": "en",
+    }
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         voice_id: Optional[str] = None,
         model_id: Optional[str] = None,
+        language_code: Optional[str] = None,
     ):
         self.api_key = api_key or os.getenv("ELEVENLABS_API_KEY")
         self.voice_id = voice_id
         self.model_id = model_id or self.DEFAULT_MODEL
+        self.language_code = language_code
         self.voice_settings = VoiceSettings()
 
         self._client = None
@@ -72,7 +85,9 @@ class ElevenLabsClient:
             logger.info("Cliente ElevenLabs inicializado (timeout: 120s)")
             return True
         except ImportError:
-            logger.error("Pacote elevenlabs nao instalado. Execute: pip install elevenlabs")
+            logger.error(
+                "Pacote elevenlabs nao instalado. Execute: pip install elevenlabs"
+            )
             return False
         except Exception as e:
             logger.error(f"Erro ao inicializar ElevenLabs: {e}")
@@ -126,30 +141,44 @@ class ElevenLabsClient:
         try:
             from elevenlabs import VoiceSettings as ELVoiceSettings
 
-            audio_generator = self._client.text_to_speech.convert(
-                voice_id=voice,
-                text=text,
-                model_id=self.model_id,
-                voice_settings=ELVoiceSettings(
+            convert_kwargs = {
+                "voice_id": voice,
+                "text": text,
+                "model_id": self.model_id,
+                "voice_settings": ELVoiceSettings(
                     stability=self.voice_settings.stability,
                     similarity_boost=self.voice_settings.similarity_boost,
                     style=self.voice_settings.style,
                     use_speaker_boost=self.voice_settings.use_speaker_boost,
                 ),
-                output_format="mp3_44100_128",
-            )
+                "output_format": "mp3_44100_128",
+            }
+
+            if self.language_code and self.model_id in self.MODELS_WITH_LANGUAGE_CODE:
+                code = self.LANGUAGE_CODE_MAP.get(self.language_code, self.language_code)
+                convert_kwargs["language_code"] = code
+
+            audio_generator = self._client.text_to_speech.convert(**convert_kwargs)
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             audio_data = b"".join(audio_generator)
 
             mp3_path = output_path.with_suffix(".mp3")
-            with open(mp3_path, 'wb') as f:
+            with open(mp3_path, "wb") as f:
                 f.write(audio_data)
 
-            duration_ms = int((time.time() - start_time) * 1000)
+            try:
+                from pydub import AudioSegment
 
-            logger.info(f"Audio gerado: {mp3_path.name} ({duration_ms}ms)")
+                audio_segment = AudioSegment.from_mp3(str(mp3_path))
+                audio_segment = self._normalize_volume(audio_segment)
+                audio_segment.export(str(mp3_path), format="mp3", bitrate="128k")
+                duration_ms = len(audio_segment)
+            except Exception:
+                duration_ms = int((time.time() - start_time) * 1000)
+
+            logger.info("Audio gerado: %s (%.1fs)", mp3_path.name, duration_ms / 1000)
 
             return GenerationResult(
                 success=True,
@@ -184,7 +213,29 @@ class ElevenLabsClient:
                 error=error_msg,
             )
 
-    def _save_as_wav(self, pcm_data: bytes, output_path: Path, sample_rate: int = 44100) -> None:
+    def _normalize_volume(self, audio_segment) -> "AudioSegment":
+        if audio_segment.dBFS == float("-inf"):
+            return audio_segment
+
+        change_in_dbfs = self.NORMALIZE_TARGET_DBFS - audio_segment.dBFS
+        normalized = audio_segment.apply_gain(change_in_dbfs)
+
+        peak_amplitude = normalized.max / (2 ** (normalized.sample_width * 8 - 1))
+        if peak_amplitude > 0.90:
+            reduction = 20 * __import__("math").log10(0.90 / peak_amplitude)
+            normalized = normalized.apply_gain(reduction)
+
+        logger.debug(
+            "Volume normalizado: %.1f dBFS -> %.1f dBFS (peak=%.2f)",
+            audio_segment.dBFS,
+            normalized.dBFS,
+            normalized.max / (2 ** (normalized.sample_width * 8 - 1)),
+        )
+        return normalized
+
+    def _save_as_wav(
+        self, pcm_data: bytes, output_path: Path, sample_rate: int = 44100
+    ) -> None:
         import struct
 
         channels = 1
@@ -195,11 +246,11 @@ class ElevenLabsClient:
         chunk_size = 36 + data_size
 
         header = struct.pack(
-            '<4sI4s4sIHHIIHH4sI',
-            b'RIFF',
+            "<4sI4s4sIHHIIHH4sI",
+            b"RIFF",
             chunk_size,
-            b'WAVE',
-            b'fmt ',
+            b"WAVE",
+            b"fmt ",
             16,
             1,
             channels,
@@ -207,11 +258,11 @@ class ElevenLabsClient:
             byte_rate,
             block_align,
             bits_per_sample,
-            b'data',
+            b"data",
             data_size,
         )
 
-        with open(output_path, 'wb') as f:
+        with open(output_path, "wb") as f:
             f.write(header)
             f.write(pcm_data)
 
@@ -259,7 +310,9 @@ class ElevenLabsClient:
                     return False
 
             info = self._client.user.subscription.get()
-            logger.info(f"API valida - Tier: {info.tier}, Chars: {info.character_count}/{info.character_limit}")
+            logger.info(
+                f"API valida - Tier: {info.tier}, Chars: {info.character_count}/{info.character_limit}"
+            )
             return True
         except Exception as e:
             logger.error(f"Erro na validacao: {type(e).__name__}: {e}")

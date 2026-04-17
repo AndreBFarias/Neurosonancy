@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import random
-from typing import Optional, Callable
+from typing import Optional
 from textual.widgets import Static
 from textual.reactive import reactive
 
 
 class WaveformVisualizer(Static):
-
     DEFAULT_CSS = """
     WaveformVisualizer {
         height: 5;
@@ -53,7 +52,7 @@ class WaveformVisualizer(Static):
             expanded = []
             for s in samples:
                 expanded.extend([s] * factor)
-            samples = expanded[:self._target_width]
+            samples = expanded[: self._target_width]
         elif len(samples) > self._target_width:
             step = len(samples) / self._target_width
             samples = [samples[int(i * step)] for i in range(self._target_width)]
@@ -102,7 +101,7 @@ class WaveformVisualizer(Static):
         bot_str = "".join(bot_row)
 
         if self.is_playing:
-            status = f"[#50fa7b] PLAYING[/]"
+            status = "[#50fa7b] PLAYING[/]"
             color = "#50fa7b" if self.mood != "intense" else "#ff5555"
         else:
             status = "[#6272a4] STOPPED[/]"

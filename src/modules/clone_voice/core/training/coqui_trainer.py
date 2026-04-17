@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
-import json
 import logging
 import subprocess
 import shutil
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Dict, Any
 
 from .trainer_base import TrainerBase, TrainingConfig, TrainingStats, VENV_COQUI
 
@@ -15,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 
 class CoquiTrainer(TrainerBase):
-
     MODEL_NAME = "coqui_xtts"
     REQUIRED_VRAM_GB = 8
     MIN_SAMPLES = 5
@@ -39,7 +35,9 @@ class CoquiTrainer(TrainerBase):
 
         audio_files = list(wavs_dir.glob("*.wav")) + list(wavs_dir.glob("*.mp3"))
         if len(audio_files) < self.MIN_SAMPLES:
-            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}")
+            self._log(
+                f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}"
+            )
             return False
 
         metadata_csv = dataset_dir / "metadata.csv"
@@ -60,10 +58,14 @@ class CoquiTrainer(TrainerBase):
 
         try:
             result = subprocess.run(
-                [python_exec, "-c", "import torch; print(f'CUDA: {torch.cuda.is_available()}')"],
+                [
+                    python_exec,
+                    "-c",
+                    "import torch; print(f'CUDA: {torch.cuda.is_available()}')",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             self._log(result.stdout.strip())
 
@@ -71,7 +73,7 @@ class CoquiTrainer(TrainerBase):
                 [python_exec, "-c", "from TTS.api import TTS; print('Coqui TTS OK')"],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode != 0:
                 self._log(f"Erro ao verificar Coqui TTS: {result.stderr}")
@@ -162,10 +164,10 @@ class CoquiTrainer(TrainerBase):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
 
-            for line in iter(process.stdout.readline, ''):
+            for line in iter(process.stdout.readline, ""):
                 line = line.strip()
                 if line:
                     self._log(line)
@@ -178,7 +180,9 @@ class CoquiTrainer(TrainerBase):
                             if self.stats.loss < self.stats.best_loss:
                                 self.stats.best_loss = self.stats.loss
                             if self.on_epoch_complete:
-                                self.on_epoch_complete(self.stats.current_epoch, self.stats.loss)
+                                self.on_epoch_complete(
+                                    self.stats.current_epoch, self.stats.loss
+                                )
 
                     if line.startswith("STEP:"):
                         parts = line.split(":")
@@ -211,7 +215,7 @@ class CoquiTrainer(TrainerBase):
         script_content = f'''# -*- coding: utf-8 -*-
 """
 Script de fine-tuning XTTS v2
-Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Gerado por Neurosonancy em {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
 import os
@@ -418,14 +422,14 @@ if __name__ == "__main__":
 '''
 
         script_path = self.config.output_dir / "train_coqui_xtts.py"
-        script_path.write_text(script_content, encoding='utf-8')
+        script_path.write_text(script_content, encoding="utf-8")
         return script_path
 
     def _create_inference_script(self, output_dir: Path) -> None:
         script_content = f'''# -*- coding: utf-8 -*-
 """
 Script de inferencia para modelo XTTS fine-tuned
-Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Gerado por Neurosonancy em {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
 import torch
@@ -492,5 +496,5 @@ if __name__ == "__main__":
 '''
 
         script_path = output_dir / "inference.py"
-        script_path.write_text(script_content, encoding='utf-8')
+        script_path.write_text(script_content, encoding="utf-8")
         self._log(f"Script de inferencia criado: {script_path.name}")

@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 try:
     import sounddevice as sd
+
     SOUNDDEVICE_AVAILABLE = True
 except ImportError:
     SOUNDDEVICE_AVAILABLE = False
@@ -17,7 +18,6 @@ except ImportError:
 
 
 class MicBridge:
-
     def __init__(
         self,
         audio_callback: Optional[Callable[[np.ndarray], None]] = None,
@@ -64,9 +64,9 @@ class MicBridge:
             self._stream = sd.InputStream(
                 samplerate=self._sample_rate,
                 channels=1,
-                dtype='float32',
+                dtype="float32",
                 blocksize=self._chunk_size,
-                callback=self._audio_stream_callback
+                callback=self._audio_stream_callback,
             )
             self._stream.start()
             logger.info("Mic listening started")
@@ -101,7 +101,6 @@ class MicBridge:
 
 
 class SimulatedMic:
-
     def __init__(self, audio_callback: Optional[Callable[[np.ndarray], None]] = None):
         self._audio_callback = audio_callback
         self._running = False
@@ -153,8 +152,7 @@ class SimulatedMic:
 
 
 def create_mic_bridge(
-    callback: Optional[Callable[[np.ndarray], None]] = None,
-    use_real: bool = True
+    callback: Optional[Callable[[np.ndarray], None]] = None, use_real: bool = True
 ):
     if use_real and SOUNDDEVICE_AVAILABLE:
         return MicBridge(audio_callback=callback)

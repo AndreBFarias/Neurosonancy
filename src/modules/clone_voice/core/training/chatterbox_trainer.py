@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 
-import os
-import json
 import logging
 import subprocess
 import shutil
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, List
 
 from .trainer_base import TrainerBase, TrainingConfig, TrainingStats, VENV_CHATTERBOX
 
@@ -52,7 +49,9 @@ class ChatterboxTrainer(TrainerBase):
 
         audio_files = list(wavs_dir.glob("*.wav")) + list(wavs_dir.glob("*.mp3"))
         if len(audio_files) < self.MIN_SAMPLES:
-            self._log(f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}")
+            self._log(
+                f"Minimo de {self.MIN_SAMPLES} amostras necessario, encontradas: {len(audio_files)}"
+            )
             return False
 
         jsonl_file = dataset_dir / "chatterbox_data.jsonl"
@@ -73,18 +72,26 @@ class ChatterboxTrainer(TrainerBase):
 
         try:
             result = subprocess.run(
-                [python_exec, "-c", "import torch; print(f'CUDA: {torch.cuda.is_available()}')"],
+                [
+                    python_exec,
+                    "-c",
+                    "import torch; print(f'CUDA: {torch.cuda.is_available()}')",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             self._log(result.stdout.strip())
 
             result = subprocess.run(
-                [python_exec, "-c", "from chatterbox.tts import ChatterboxTTS; print('Chatterbox OK')"],
+                [
+                    python_exec,
+                    "-c",
+                    "from chatterbox.tts import ChatterboxTTS; print('Chatterbox OK')",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=30
+                timeout=30,
             )
             if result.returncode != 0:
                 self._log(f"Erro ao verificar Chatterbox: {result.stderr}")
@@ -182,10 +189,10 @@ class ChatterboxTrainer(TrainerBase):
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,
-                bufsize=1
+                bufsize=1,
             )
 
-            for line in iter(process.stdout.readline, ''):
+            for line in iter(process.stdout.readline, ""):
                 line = line.strip()
                 if line:
                     self._log(line)
@@ -222,7 +229,7 @@ class ChatterboxTrainer(TrainerBase):
         script_content = f'''# -*- coding: utf-8 -*-
 """
 Script de preparacao de embeddings Chatterbox
-Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Gerado por Neurosonancy em {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 Chatterbox e um modelo zero-shot. Este script extrai embeddings
 de um arquivo de referencia unificado para clonagem de voz.
@@ -332,14 +339,14 @@ if __name__ == "__main__":
 '''
 
         script_path = self.config.output_dir / "prepare_chatterbox.py"
-        script_path.write_text(script_content, encoding='utf-8')
+        script_path.write_text(script_content, encoding="utf-8")
         return script_path
 
     def _create_inference_script(self, output_dir: Path) -> None:
         script_content = f'''# -*- coding: utf-8 -*-
 """
 Script de inferencia para Chatterbox com voz clonada
-Gerado por Neurosonancy em {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Gerado por Neurosonancy em {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
 import torch
@@ -412,5 +419,5 @@ if __name__ == "__main__":
 '''
 
         script_path = output_dir / "inference.py"
-        script_path.write_text(script_content, encoding='utf-8')
+        script_path.write_text(script_content, encoding="utf-8")
         self._log(f"Script de inferencia criado: {script_path.name}")

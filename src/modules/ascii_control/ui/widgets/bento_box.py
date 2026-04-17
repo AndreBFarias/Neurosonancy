@@ -4,7 +4,6 @@ from textual.widgets import Static
 
 
 class BentoBox(Static):
-
     DEFAULT_CSS = """
     BentoBox {
         border: solid #6272a4;

@@ -3,7 +3,7 @@
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.widgets import Header, Footer, Static, Button
-from textual.containers import Vertical, Horizontal, Grid
+from textual.containers import Vertical, Horizontal
 
 from src.core.theme import CSS_COMMON, COLORS
 
@@ -17,7 +17,7 @@ class ModuleCard(Static):
         shortcut: str,
         icon: str = "",
         accent_color: str = "",
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self._title = title
@@ -29,34 +29,27 @@ class ModuleCard(Static):
 
     def compose(self) -> ComposeResult:
         with Vertical(classes="card-inner"):
+            yield Static(f"[bold {self._accent}]{self._icon}[/]", classes="card-icon")
             yield Static(
-                f"[bold {self._accent}]{self._icon}[/]",
-                classes="card-icon"
+                f"[bold {COLORS['text_primary']}]{self._title}[/]", classes="card-title"
             )
             yield Static(
-                f"[bold {COLORS['text_primary']}]{self._title}[/]",
-                classes="card-title"
-            )
-            yield Static(
-                f"[{COLORS['text_muted']}]{self._description}[/]",
-                classes="card-desc"
+                f"[{COLORS['text_muted']}]{self._description}[/]", classes="card-desc"
             )
             yield Static(
                 f"[{COLORS['text_secondary']}]Pressione [bold {self._accent}]{self._shortcut}[/] ou clique[/]",
-                classes="card-hint"
+                classes="card-hint",
             )
-            yield Button(
-                "INICIAR",
-                id=f"btn-{self._module_id}",
-                classes="card-btn"
-            )
+            yield Button("INICIAR", id=f"btn-{self._module_id}", classes="card-btn")
 
 
 class NeurosonancyLauncher(App):
     TITLE = "NEUROSONANCY"
     SUB_TITLE = "Unified Audio Toolkit"
 
-    CSS = CSS_COMMON + """
+    CSS = (
+        CSS_COMMON
+        + """
     Screen {
         align: center middle;
     }
@@ -170,6 +163,7 @@ class NeurosonancyLauncher(App):
         padding: 1 0;
     }
     """
+    )
 
     BINDINGS = [
         Binding("q", "quit", "Sair", show=True),
@@ -185,12 +179,9 @@ class NeurosonancyLauncher(App):
             with Vertical(id="header-section"):
                 yield Static(
                     f"[bold {COLORS['accent_primary']}]N E U R O S O N A N C Y[/]",
-                    id="logo"
+                    id="logo",
                 )
-                yield Static(
-                    "Unified Audio Toolkit v2.0",
-                    id="version"
-                )
+                yield Static("Unified Audio Toolkit v2.0", id="version")
 
             with Horizontal(id="cards-grid"):
                 yield ModuleCard(
@@ -200,7 +191,7 @@ class NeurosonancyLauncher(App):
                     shortcut="1",
                     icon="[#22d3ee][[1]][/]",
                     accent_color=COLORS["neon_cyan"],
-                    id="card-ascii"
+                    id="card-ascii",
                 )
                 yield ModuleCard(
                     title="TRAINER",
@@ -209,7 +200,7 @@ class NeurosonancyLauncher(App):
                     shortcut="2",
                     icon="[#4ade80][[2]][/]",
                     accent_color=COLORS["neon_green"],
-                    id="card-voice"
+                    id="card-voice",
                 )
                 yield ModuleCard(
                     title="CLONE",
@@ -218,18 +209,15 @@ class NeurosonancyLauncher(App):
                     shortcut="3",
                     icon="[#ec4899][[3]][/]",
                     accent_color=COLORS["neon_pink"],
-                    id="card-clone"
+                    id="card-clone",
                 )
 
             yield Static(
                 f"[{COLORS['text_muted']}]Use [bold]1[/], [bold]2[/] ou [bold]3[/] para selecionar | [bold]Q[/] para sair[/]",
-                id="nav-hint"
+                id="nav-hint",
             )
 
-            yield Static(
-                f"[{COLORS['border_dim']}]Sistema pronto[/]",
-                id="status-bar"
-            )
+            yield Static(f"[{COLORS['border_dim']}]Sistema pronto[/]", id="status-bar")
 
         yield Footer()
 

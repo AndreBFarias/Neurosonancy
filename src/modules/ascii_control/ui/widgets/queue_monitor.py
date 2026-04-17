@@ -6,7 +6,6 @@ from textual.containers import Vertical
 
 
 class QueueBar(Static):
-
     DEFAULT_CSS = """
     QueueBar {
         height: 2;
@@ -68,7 +67,6 @@ class QueueBar(Static):
 
 
 class QueueMonitor(Vertical):
-
     DEFAULT_CSS = """
     QueueMonitor {
         border: solid #6272a4;
@@ -105,6 +103,5 @@ class QueueMonitor(Vertical):
         for queue_id, data in stats.items():
             if queue_id in self._bars:
                 self._bars[queue_id].update_value(
-                    data.get("size", 0),
-                    data.get("maxsize")
+                    data.get("size", 0), data.get("maxsize")
                 )

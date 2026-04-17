@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from textual.app import App, ComposeResult
+from textual.app import App
 from textual.binding import Binding
-from textual.widgets import Header, Footer, Static
-from textual.containers import Vertical
 
 from .theme import CSS_COMMON, COLORS
 

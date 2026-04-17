@@ -8,13 +8,12 @@ import sys
 from pathlib import Path
 from typing import Optional
 from logging.handlers import RotatingFileHandler
-from datetime import datetime
-import traceback
 
 
 # Cores ANSI para terminal
 class Colors:
     """Cores para formatação de logs no terminal."""
+
     RESET = "\033[0m"
     BOLD = "\033[1m"
 
@@ -144,14 +143,9 @@ class TranscriptionLogger:
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(logging.INFO)  # Usuário vê INFO+ (eventos importantes)
 
-        console_format = (
-            "%(message)s" # Clean format for console
-        )
+        console_format = "%(message)s"  # Clean format for console
 
-        console_formatter = ColoredFormatter(
-            console_format,
-            datefmt="%H:%M:%S"
-        )
+        console_formatter = ColoredFormatter(console_format, datefmt="%H:%M:%S")
         console_handler.setFormatter(console_formatter)
         self.logger.addHandler(console_handler)
 
@@ -161,10 +155,7 @@ class TranscriptionLogger:
             log_file.parent.mkdir(parents=True, exist_ok=True)
 
             file_handler = RotatingFileHandler(
-                log_file,
-                maxBytes=max_bytes,
-                backupCount=backup_count,
-                encoding="utf-8"
+                log_file, maxBytes=max_bytes, backupCount=backup_count, encoding="utf-8"
             )
             file_handler.setLevel(logging.DEBUG)
 
@@ -175,10 +166,7 @@ class TranscriptionLogger:
                 "%(exc_text)s"
             )
 
-            file_formatter = DetailedFormatter(
-                file_format,
-                datefmt="%Y-%m-%d %H:%M:%S"
-            )
+            file_formatter = DetailedFormatter(file_format, datefmt="%Y-%m-%d %H:%M:%S")
             file_handler.setFormatter(file_formatter)
             self.logger.addHandler(file_handler)
 

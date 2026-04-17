@@ -4,10 +4,15 @@ Todas as mudanças notáveis deste projeto serão documentadas aqui.
 
 Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
-## [Não publicado]
+## [2.0.0] - 2026-04-16
 
-### Em desenvolvimento
-- Integração com módulo de companions
+### Mudado
+- `pyproject.toml` corrigido: build-backend `setuptools.build_meta`, versão 2.0.0, dev extras
+
+### Adicionado
+- `tests/test_smoke.py` com 5 testes (importabilidade, metadata, licença, .env template)
+- `.github/workflows/ci.yml` (pytest)
+- `CODE_OF_CONDUCT.md`, `SECURITY.md`
 
 ## [1.0.0] - 2025-01-01
 

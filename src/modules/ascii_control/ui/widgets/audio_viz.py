@@ -6,7 +6,6 @@ from textual.reactive import reactive
 
 
 class AudioVisualizer(Static):
-
     DEFAULT_CSS = """
     AudioVisualizer {
         height: 5;

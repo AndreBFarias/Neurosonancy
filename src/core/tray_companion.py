@@ -15,17 +15,21 @@ Gtk = None
 
 try:
     import gi  # type: ignore
+
     gi.require_version("AyatanaAppIndicator3", "0.1")
     from gi.repository import AyatanaAppIndicator3 as AppIndicator  # type: ignore
     from gi.repository import GLib, Gtk  # type: ignore
+
     TRAY_AVAILABLE = True
     logger.info("Tray: usando AyatanaAppIndicator3")
 except (ImportError, ValueError):
     try:
         import gi  # type: ignore
+
         gi.require_version("AppIndicator3", "0.1")
         from gi.repository import AppIndicator3 as AppIndicator  # type: ignore
         from gi.repository import GLib, Gtk  # type: ignore
+
         TRAY_AVAILABLE = True
         logger.info("Tray: usando AppIndicator3")
     except (ImportError, ValueError):
@@ -57,7 +61,9 @@ class TrayCompanion:
             return False
         if self._running:
             return True
-        self._thread = threading.Thread(target=self._run, daemon=True, name="tray-companion")
+        self._thread = threading.Thread(
+            target=self._run, daemon=True, name="tray-companion"
+        )
         self._thread.start()
         self._running = True
         atexit.register(self.stop)

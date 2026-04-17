@@ -6,19 +6,15 @@ COLORS = {
     "bg_surface": "#1a1d2e",
     "bg_elevated": "#232738",
     "bg_hover": "#2a2f45",
-
     "border_dim": "#2d3250",
     "border_normal": "#3d4370",
     "border_accent": "#6366f1",
-
     "text_primary": "#e2e8f0",
     "text_secondary": "#94a3b8",
     "text_muted": "#64748b",
-
     "accent_primary": "#8b5cf6",
     "accent_secondary": "#6366f1",
     "accent_tertiary": "#a78bfa",
-
     "success": "#22c55e",
     "success_dim": "#15803d",
     "warning": "#f59e0b",
@@ -27,7 +23,6 @@ COLORS = {
     "error_dim": "#b91c1c",
     "info": "#06b6d4",
     "info_dim": "#0891b2",
-
     "neon_pink": "#ec4899",
     "neon_cyan": "#22d3ee",
     "neon_green": "#4ade80",
@@ -43,7 +38,8 @@ THEME = {
     "transition": "0.15s ease",
 }
 
-CSS_COMMON = """
+CSS_COMMON = (
+    """
 Screen {
     background: $bg_darkest;
 }
@@ -304,30 +300,31 @@ Static.status-info {
     margin: 1 0;
     height: 1;
 }
-""".replace("$bg_darkest", COLORS["bg_darkest"]) \
-   .replace("$bg_dark", COLORS["bg_dark"]) \
-   .replace("$bg_surface", COLORS["bg_surface"]) \
-   .replace("$bg_elevated", COLORS["bg_elevated"]) \
-   .replace("$bg_hover", COLORS["bg_hover"]) \
-   .replace("$border_dim", COLORS["border_dim"]) \
-   .replace("$border_normal", COLORS["border_normal"]) \
-   .replace("$border_accent", COLORS["border_accent"]) \
-   .replace("$text_primary", COLORS["text_primary"]) \
-   .replace("$text_secondary", COLORS["text_secondary"]) \
-   .replace("$text_muted", COLORS["text_muted"]) \
-   .replace("$accent_primary", COLORS["accent_primary"]) \
-   .replace("$accent_secondary", COLORS["accent_secondary"]) \
-   .replace("$accent_tertiary", COLORS["accent_tertiary"]) \
-   .replace("$success_dim", COLORS["success_dim"]) \
-   .replace("$success", COLORS["success"]) \
-   .replace("$warning_dim", COLORS["warning_dim"]) \
-   .replace("$warning", COLORS["warning"]) \
-   .replace("$error_dim", COLORS["error_dim"]) \
-   .replace("$error", COLORS["error"]) \
-   .replace("$info_dim", COLORS["info_dim"]) \
-   .replace("$info", COLORS["info"]) \
-   .replace("$neon_pink", COLORS["neon_pink"]) \
-   .replace("$neon_cyan", COLORS["neon_cyan"]) \
-   .replace("$neon_green", COLORS["neon_green"]) \
-   .replace("$neon_orange", COLORS["neon_orange"]) \
-   .replace("$neon_purple", COLORS["neon_purple"])
+""".replace("$bg_darkest", COLORS["bg_darkest"])
+    .replace("$bg_dark", COLORS["bg_dark"])
+    .replace("$bg_surface", COLORS["bg_surface"])
+    .replace("$bg_elevated", COLORS["bg_elevated"])
+    .replace("$bg_hover", COLORS["bg_hover"])
+    .replace("$border_dim", COLORS["border_dim"])
+    .replace("$border_normal", COLORS["border_normal"])
+    .replace("$border_accent", COLORS["border_accent"])
+    .replace("$text_primary", COLORS["text_primary"])
+    .replace("$text_secondary", COLORS["text_secondary"])
+    .replace("$text_muted", COLORS["text_muted"])
+    .replace("$accent_primary", COLORS["accent_primary"])
+    .replace("$accent_secondary", COLORS["accent_secondary"])
+    .replace("$accent_tertiary", COLORS["accent_tertiary"])
+    .replace("$success_dim", COLORS["success_dim"])
+    .replace("$success", COLORS["success"])
+    .replace("$warning_dim", COLORS["warning_dim"])
+    .replace("$warning", COLORS["warning"])
+    .replace("$error_dim", COLORS["error_dim"])
+    .replace("$error", COLORS["error"])
+    .replace("$info_dim", COLORS["info_dim"])
+    .replace("$info", COLORS["info"])
+    .replace("$neon_pink", COLORS["neon_pink"])
+    .replace("$neon_cyan", COLORS["neon_cyan"])
+    .replace("$neon_green", COLORS["neon_green"])
+    .replace("$neon_orange", COLORS["neon_orange"])
+    .replace("$neon_purple", COLORS["neon_purple"])
+)

@@ -12,7 +12,15 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Label, Input, Static, ProgressBar, RadioSet, RadioButton
+from textual.widgets import (
+    Button,
+    Label,
+    Input,
+    Static,
+    ProgressBar,
+    RadioSet,
+    RadioButton,
+)
 from textual.containers import Vertical, Horizontal, Container
 
 from src.core.theme import COLORS
@@ -52,12 +60,15 @@ class SampleCounter(Static):
     required: reactive[int] = reactive(config.TRAINING_CONFIG["TARGET_SAMPLES"])
 
     def render(self) -> str:
-        color = COLORS['success'] if self.recorded >= config.TRAINING_CONFIG["MIN_SAMPLES"] else COLORS['warning']
+        color = (
+            COLORS["success"]
+            if self.recorded >= config.TRAINING_CONFIG["MIN_SAMPLES"]
+            else COLORS["warning"]
+        )
         return f"[{color}]Amostras: [bold]{self.recorded}[/bold]/{self.required}[/]"
 
 
 class VoiceTrainerPanel(Widget):
-
     BINDINGS = [
         Binding("r", "shuffle_phrase", "Sortear", show=True),
         Binding("space", "toggle_recording", "Gravar", show=True),
@@ -79,9 +90,9 @@ class VoiceTrainerPanel(Widget):
     VoiceTrainerPanel #trainer-left-panel {{
         width: 60%;
         height: 100%;
-        background: {COLORS['bg_surface']};
-        border: solid {COLORS['neon_green']};
-        border-title-color: {COLORS['neon_green']};
+        background: {COLORS["bg_surface"]};
+        border: solid {COLORS["neon_green"]};
+        border-title-color: {COLORS["neon_green"]};
         padding: 1 2;
         margin-right: 1;
     }}
@@ -89,9 +100,9 @@ class VoiceTrainerPanel(Widget):
     VoiceTrainerPanel #trainer-right-panel {{
         width: 40%;
         height: 100%;
-        background: {COLORS['bg_surface']};
-        border: solid {COLORS['accent_primary']};
-        border-title-color: {COLORS['accent_primary']};
+        background: {COLORS["bg_surface"]};
+        border: solid {COLORS["accent_primary"]};
+        border-title-color: {COLORS["accent_primary"]};
         padding: 1 2;
     }}
 
@@ -99,14 +110,14 @@ class VoiceTrainerPanel(Widget):
         width: 100%;
         text-align: center;
         text-style: bold;
-        color: {COLORS['neon_green']};
+        color: {COLORS["neon_green"]};
         padding: 0 0 1 0;
-        border-bottom: solid {COLORS['border_normal']};
+        border-bottom: solid {COLORS["border_normal"]};
         margin-bottom: 1;
     }}
 
     VoiceTrainerPanel #trainer-right-panel .trainer-section-title {{
-        color: {COLORS['accent_primary']};
+        color: {COLORS["accent_primary"]};
     }}
 
     VoiceTrainerPanel #trainer-phrase-container {{
@@ -117,8 +128,8 @@ class VoiceTrainerPanel(Widget):
         width: 100%;
         min-height: 5;
         height: 1fr;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['neon_green']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["neon_green"]};
         padding: 2;
         content-align: center middle;
         text-align: center;
@@ -135,8 +146,8 @@ class VoiceTrainerPanel(Widget):
     VoiceTrainerPanel #trainer-audio-visualizer {{
         width: 100%;
         height: 4;
-        background: {COLORS['bg_dark']};
-        border: solid {COLORS['neon_green']};
+        background: {COLORS["bg_dark"]};
+        border: solid {COLORS["neon_green"]};
         margin-bottom: 1;
     }}
 
@@ -149,7 +160,7 @@ class VoiceTrainerPanel(Widget):
     }}
 
     VoiceTrainerPanel #trainer-recording-progress > .bar--complete {{
-        color: {COLORS['neon_green']};
+        color: {COLORS["neon_green"]};
     }}
 
     VoiceTrainerPanel #trainer-main-buttons {{
@@ -167,30 +178,30 @@ class VoiceTrainerPanel(Widget):
     }}
 
     VoiceTrainerPanel #trainer-btn-shuffle {{
-        background: {COLORS['accent_primary']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["accent_primary"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     VoiceTrainerPanel #trainer-btn-record {{
-        background: {COLORS['success']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["success"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     VoiceTrainerPanel #trainer-btn-play {{
-        background: {COLORS['info']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["info"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     VoiceTrainerPanel #trainer-btn-discard {{
-        background: {COLORS['error']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["error"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     VoiceTrainerPanel #trainer-btn-save-sample {{
         width: 100%;
         height: 3;
-        background: {COLORS['neon_green']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["neon_green"]};
+        color: {COLORS["bg_darkest"]};
         text-style: bold;
         margin-top: 1;
     }}
@@ -198,7 +209,7 @@ class VoiceTrainerPanel(Widget):
     VoiceTrainerPanel #trainer-samples-section {{
         width: 100%;
         height: auto;
-        border-top: solid {COLORS['border_normal']};
+        border-top: solid {COLORS["border_normal"]};
         padding-top: 1;
         margin-top: 1;
     }}
@@ -207,14 +218,14 @@ class VoiceTrainerPanel(Widget):
         width: 100%;
         height: auto;
         max-height: 6;
-        color: {COLORS['text_secondary']};
+        color: {COLORS["text_secondary"]};
         padding: 1;
         text-align: left;
     }}
 
     VoiceTrainerPanel .trainer-setting-label {{
         width: 100%;
-        color: {COLORS['text_primary']};
+        color: {COLORS["text_primary"]};
         padding: 1 0 0 0;
     }}
 
@@ -226,13 +237,13 @@ class VoiceTrainerPanel(Widget):
 
     VoiceTrainerPanel RadioSet {{
         width: 100%;
-        background: {COLORS['bg_dark']};
-        border: solid {COLORS['border_dim']};
+        background: {COLORS["bg_dark"]};
+        border: solid {COLORS["border_dim"]};
         padding: 1;
     }}
 
     VoiceTrainerPanel RadioButton.-selected {{
-        color: {COLORS['accent_primary']};
+        color: {COLORS["accent_primary"]};
     }}
     """
 
@@ -259,16 +270,28 @@ class VoiceTrainerPanel(Widget):
                 yield AudioVisualizer(id="trainer-audio-visualizer")
 
                 with Vertical(id="trainer-progress-container"):
-                    yield ProgressBar(id="trainer-recording-progress", total=100, show_eta=False)
+                    yield ProgressBar(
+                        id="trainer-recording-progress", total=100, show_eta=False
+                    )
 
                 with Horizontal(id="trainer-main-buttons"):
                     yield Button("SORTEAR", id="trainer-btn-shuffle", variant="primary")
                     yield Button("GRAVAR", id="trainer-btn-record", variant="success")
                     yield Button("OUVIR", id="trainer-btn-play", disabled=True)
-                    yield Button("DESCARTAR", id="trainer-btn-discard", variant="warning", disabled=True)
+                    yield Button(
+                        "DESCARTAR",
+                        id="trainer-btn-discard",
+                        variant="warning",
+                        disabled=True,
+                    )
 
                 with Vertical(id="trainer-save-button-container"):
-                    yield Button("SALVAR AMOSTRA", id="trainer-btn-save-sample", variant="primary", disabled=True)
+                    yield Button(
+                        "SALVAR AMOSTRA",
+                        id="trainer-btn-save-sample",
+                        variant="primary",
+                        disabled=True,
+                    )
 
                 with Vertical(id="trainer-samples-section"):
                     yield Label("Amostras Salvas", classes="trainer-section-title")
@@ -278,19 +301,29 @@ class VoiceTrainerPanel(Widget):
                 yield Label("CONFIGURACOES", classes="trainer-section-title")
 
                 with Vertical(classes="trainer-setting-item"):
-                    yield Label("Nivel de Dificuldade:", classes="trainer-setting-label")
+                    yield Label(
+                        "Nivel de Dificuldade:", classes="trainer-setting-label"
+                    )
                     with RadioSet(id="trainer-level-selector"):
-                        yield RadioButton("Baseline (40 frases)", id="trainer-level-baseline", value=True)
+                        yield RadioButton(
+                            "Baseline (40 frases)",
+                            id="trainer-level-baseline",
+                            value=True,
+                        )
                         yield RadioButton("Facil (20 frases)", id="trainer-level-low")
-                        yield RadioButton("Medio (40 frases)", id="trainer-level-medium")
-                        yield RadioButton("Dificil (60 frases)", id="trainer-level-high")
+                        yield RadioButton(
+                            "Medio (40 frases)", id="trainer-level-medium"
+                        )
+                        yield RadioButton(
+                            "Dificil (60 frases)", id="trainer-level-high"
+                        )
 
                 with Vertical(classes="trainer-setting-item"):
                     yield Label("Nome do Modelo:", classes="trainer-setting-label")
                     yield Input(
                         placeholder="Ex: Voz_Andre_V1",
                         id="trainer-input-model-name",
-                        value=f"Voz_{datetime.now().strftime('%Y%m%d')}"
+                        value=f"Voz_{datetime.now().strftime('%Y%m%d')}",
                     )
 
                 with Vertical(classes="trainer-setting-item"):
@@ -299,7 +332,7 @@ class VoiceTrainerPanel(Widget):
                         placeholder="10",
                         id="trainer-input-target-samples",
                         value=str(config.TRAINING_CONFIG["TARGET_SAMPLES"]),
-                        type="integer"
+                        type="integer",
                     )
 
     def on_mount(self) -> None:
@@ -316,7 +349,7 @@ class VoiceTrainerPanel(Widget):
             channels=config.AUDIO_CONFIG["CHANNELS"],
             device_id=config.AUDIO_CONFIG.get("DEVICE_ID"),
             vad_silence_duration=config.VAD_CONFIG["SILENCE_DURATION"],
-            vad_energy_threshold=config.VAD_CONFIG["ENERGY_THRESHOLD"]
+            vad_energy_threshold=config.VAD_CONFIG["ENERGY_THRESHOLD"],
         )
 
         visualizer = self.query_one("#trainer-audio-visualizer", AudioVisualizer)
@@ -326,7 +359,7 @@ class VoiceTrainerPanel(Widget):
         self.audio_comparator = AudioComparator(
             whisper_model_size=config.WHISPER_CONFIG["MODEL_SIZE"],
             device=config.WHISPER_CONFIG["DEVICE"],
-            compute_type=config.WHISPER_CONFIG["COMPUTE_TYPE"]
+            compute_type=config.WHISPER_CONFIG["COMPUTE_TYPE"],
         )
 
     def _get_current_phrases(self) -> list:
@@ -340,7 +373,9 @@ class VoiceTrainerPanel(Widget):
 
     def action_shuffle_phrase(self) -> None:
         phrases = self._get_current_phrases()
-        available_indices = [i for i in range(len(phrases)) if i != self.current_phrase_index]
+        available_indices = [
+            i for i in range(len(phrases)) if i != self.current_phrase_index
+        ]
         if available_indices:
             self.current_phrase_index = random.choice(available_indices)
             phrase_display = self.query_one("#trainer-phrase-display", PhraseDisplay)
@@ -359,6 +394,7 @@ class VoiceTrainerPanel(Widget):
     def _set_sidebar_status(self, status: str | None) -> None:
         try:
             from src.core.widgets.nav_sidebar import NavSidebar
+
             self.app.query_one(NavSidebar).set_module_status("trainer", status)
         except Exception:
             pass
@@ -389,15 +425,21 @@ class VoiceTrainerPanel(Widget):
             return
 
         self._animate_progress()
-        self.app.notify("Gravando... pare de falar quando terminar.", severity="information")
+        self.app.notify(
+            "Gravando... pare de falar quando terminar.", severity="information"
+        )
 
     def _stop_recording(self) -> None:
         self._set_sidebar_status(None)
         self.is_recording = False
         saved_path = self.audio_recorder.stop_recording()
 
-        self.query_one("#trainer-status-indicator", StatusIndicator).is_recording = False
-        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(False)
+        self.query_one(
+            "#trainer-status-indicator", StatusIndicator
+        ).is_recording = False
+        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(
+            False
+        )
         self.query_one("#trainer-btn-record", Button).disabled = False
         self.query_one("#trainer-btn-shuffle", Button).disabled = False
 
@@ -419,15 +461,23 @@ class VoiceTrainerPanel(Widget):
         self._set_sidebar_status(None)
         self.is_recording = False
         self.last_recording_path = None
-        self.query_one("#trainer-status-indicator", StatusIndicator).is_recording = False
-        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(False)
+        self.query_one(
+            "#trainer-status-indicator", StatusIndicator
+        ).is_recording = False
+        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(
+            False
+        )
         self.query_one("#trainer-btn-record", Button).disabled = False
 
     def _auto_save_sample(self) -> None:
         self._set_sidebar_status(None)
         saved_path = self.audio_recorder.stop_recording()
-        self.query_one("#trainer-status-indicator", StatusIndicator).is_recording = False
-        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(False)
+        self.query_one(
+            "#trainer-status-indicator", StatusIndicator
+        ).is_recording = False
+        self.query_one("#trainer-audio-visualizer", AudioVisualizer).set_recording(
+            False
+        )
         self.is_recording = False
 
         if not saved_path:
@@ -448,7 +498,7 @@ class VoiceTrainerPanel(Widget):
         target = config.TRAINING_CONFIG["TARGET_SAMPLES"]
         self.app.notify(
             f"Amostra salva automaticamente! ({len(self.recorded_samples)}/{target})",
-            severity="information"
+            severity="information",
         )
 
     def _run_comparison_async(self) -> None:
@@ -456,17 +506,29 @@ class VoiceTrainerPanel(Widget):
             try:
                 phrases = self._get_current_phrases()
                 expected_phrase = phrases[self.current_phrase_index]
-                transcribed = self.audio_comparator.transcribe_audio(self.last_recording_path)
+                transcribed = self.audio_comparator.transcribe_audio(
+                    self.last_recording_path
+                )
                 if not transcribed:
-                    self.call_from_thread(self.app.notify, "Erro na transcricao!", severity="error")
+                    self.call_from_thread(
+                        self.app.notify, "Erro na transcricao!", severity="error"
+                    )
                     return
-                comparisons, score = self.audio_comparator.compare_texts(expected_phrase, transcribed)
+                comparisons, score = self.audio_comparator.compare_texts(
+                    expected_phrase, transcribed
+                )
                 formatted = self.audio_comparator.format_comparison(comparisons, score)
-                phrase_display = self.query_one("#trainer-phrase-display", PhraseDisplay)
-                self.call_from_thread(setattr, phrase_display, "comparison_result", formatted)
+                phrase_display = self.query_one(
+                    "#trainer-phrase-display", PhraseDisplay
+                )
+                self.call_from_thread(
+                    setattr, phrase_display, "comparison_result", formatted
+                )
             except Exception as e:
                 logger.error("Comparison error: %s", e, exc_info=True)
-                self.call_from_thread(self.app.notify, f"Erro na comparacao: {e}", severity="error")
+                self.call_from_thread(
+                    self.app.notify, f"Erro na comparacao: {e}", severity="error"
+                )
 
         threading.Thread(target=compare, daemon=True).start()
 
@@ -491,7 +553,10 @@ class VoiceTrainerPanel(Widget):
         counter.recorded = len(self.recorded_samples)
 
         if self.recorded_samples:
-            items = [f"  {i+1}. {Path(s).name}" for i, s in enumerate(self.recorded_samples)]
+            items = [
+                f"  {i + 1}. {Path(s).name}"
+                for i, s in enumerate(self.recorded_samples)
+            ]
             samples_list.update("\n".join(items[-5:]))
             if len(self.recorded_samples) > 5:
                 samples_list.update(f"  ... e mais {len(self.recorded_samples) - 5}")
@@ -518,7 +583,9 @@ class VoiceTrainerPanel(Widget):
                     except Exception as e:
                         logger.error("Playback error: %s", e)
                         self.call_from_thread(
-                            self.app.notify, f"Erro ao reproduzir: {e}", severity="error"
+                            self.app.notify,
+                            f"Erro ao reproduzir: {e}",
+                            severity="error",
                         )
 
                 threading.Thread(target=play, daemon=True).start()
@@ -534,7 +601,9 @@ class VoiceTrainerPanel(Widget):
 
         elif btn_id == "trainer-btn-save-sample":
             if self.last_recording_path and os.path.exists(self.last_recording_path):
-                self.recorded_samples = self.recorded_samples + [self.last_recording_path]
+                self.recorded_samples = self.recorded_samples + [
+                    self.last_recording_path
+                ]
                 self.last_recording_path = None
                 self._update_samples_list()
                 self.action_shuffle_phrase()
@@ -544,7 +613,7 @@ class VoiceTrainerPanel(Widget):
                 target = config.TRAINING_CONFIG["TARGET_SAMPLES"]
                 self.app.notify(
                     f"Amostra salva! ({len(self.recorded_samples)}/{target})",
-                    severity="information"
+                    severity="information",
                 )
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
@@ -559,7 +628,9 @@ class VoiceTrainerPanel(Widget):
             self.current_level = level_map[btn_id]
             self.current_phrase_index = -1
             self.action_shuffle_phrase()
-            self.app.notify(f"Nivel alterado para: {self.current_level}", severity="information")
+            self.app.notify(
+                f"Nivel alterado para: {self.current_level}", severity="information"
+            )
 
 
 # "A dor que suportas hoje é a força que carregas amanhã." — Sêneca

@@ -19,9 +19,8 @@ class PhraseCategory:
 
 
 class PhraseParser:
-
-    CATEGORY_PATTERN = re.compile(r'^\[([A-Z_]+)\]$')
-    PHRASE_PATTERN = re.compile(r'^-\s+(.+)$')
+    CATEGORY_PATTERN = re.compile(r"^\[([A-Z_]+)\]$")
+    PHRASE_PATTERN = re.compile(r"^-\s+(.+)$")
 
     def __init__(self):
         self.categories: Dict[str, PhraseCategory] = {}
@@ -31,7 +30,7 @@ class PhraseParser:
         if not filepath.exists():
             return False
 
-        content = filepath.read_text(encoding='utf-8')
+        content = filepath.read_text(encoding="utf-8")
         return self.parse_content(content)
 
     def parse_content(self, content: str) -> bool:
@@ -41,33 +40,35 @@ class PhraseParser:
         current_category: Optional[str] = None
         in_code_block = False
 
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             stripped = line.strip()
 
-            if stripped.startswith('```'):
+            if stripped.startswith("```"):
                 in_code_block = not in_code_block
                 continue
 
             if in_code_block:
                 continue
 
-            if not stripped or stripped.startswith('#'):
+            if not stripped or stripped.startswith("#"):
                 continue
 
-            if stripped.startswith('---'):
+            if stripped.startswith("---"):
                 continue
 
             category_match = self.CATEGORY_PATTERN.match(stripped)
             if category_match:
                 current_category = category_match.group(1)
                 if current_category not in self.categories:
-                    self.categories[current_category] = PhraseCategory(name=current_category)
+                    self.categories[current_category] = PhraseCategory(
+                        name=current_category
+                    )
                 continue
 
             phrase_match = self.PHRASE_PATTERN.match(stripped)
             if phrase_match and current_category:
                 phrase = phrase_match.group(1).strip()
-                if phrase and not phrase.startswith('`'):
+                if phrase and not phrase.startswith("`"):
                     self.categories[current_category].phrases.append(phrase)
                     self._all_phrases.append(phrase)
 

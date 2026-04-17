@@ -66,13 +66,19 @@ class SubprocessModel(BaseModel):
             python_bin = venv_path / "bin" / "python"
             if python_bin.exists():
                 return str(python_bin)
-            logger.warning("venv %s nao encontrado, usando python3 do sistema", venv_path)
+            logger.warning(
+                "venv %s nao encontrado, usando python3 do sistema", venv_path
+            )
         return "python3"
 
-    async def _run_in_venv(self, script: str, timeout: float = 30.0) -> tuple[int, str, str]:
+    async def _run_in_venv(
+        self, script: str, timeout: float = 30.0
+    ) -> tuple[int, str, str]:
         python = self._get_python()
         proc = await asyncio.create_subprocess_exec(
-            python, "-c", script,
+            python,
+            "-c",
+            script,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -120,7 +126,10 @@ class WhisperSTTModel(BaseModel):
     async def load(self) -> bool:
         try:
             from faster_whisper import WhisperModel  # type: ignore
-            self._model_instance = WhisperModel("base", device="cpu", compute_type="int8")
+
+            self._model_instance = WhisperModel(
+                "base", device="cpu", compute_type="int8"
+            )
             self._is_loaded = True
             logger.info("WhisperSTT carregado")
             return True
@@ -141,6 +150,7 @@ class OllamaLLMModel(BaseModel):
     async def load(self) -> bool:
         try:
             import httpx
+
             async with httpx.AsyncClient(timeout=5.0) as client:
                 resp = await client.get("http://localhost:11434/api/tags")
                 if resp.status_code == 200:
@@ -218,7 +228,9 @@ class ModelManager:
 
     def _ensure_init(self) -> None:
         if not self._initialized:
-            self._current: dict[ModelCategory, BaseModel | None] = {c: None for c in ModelCategory}
+            self._current: dict[ModelCategory, BaseModel | None] = {
+                c: None for c in ModelCategory
+            }
             self._lock: asyncio.Lock = asyncio.Lock()
             self._initialized = True
 
@@ -231,7 +243,9 @@ class ModelManager:
 
             spec = self._find_spec(category, engine, variant)
             if spec is None:
-                logger.warning("ModelSpec nao encontrado: %s/%s/%s", category, engine, variant)
+                logger.warning(
+                    "ModelSpec nao encontrado: %s/%s/%s", category, engine, variant
+                )
                 return False
 
             model = ModelFactory.create(spec)
@@ -241,9 +255,15 @@ class ModelManager:
                 logger.info("Modelo ativo: %s", spec.display_name)
             return success
 
-    def _find_spec(self, category: ModelCategory, engine: str, variant: str) -> ModelSpec | None:
+    def _find_spec(
+        self, category: ModelCategory, engine: str, variant: str
+    ) -> ModelSpec | None:
         for spec in AVAILABLE_MODELS:
-            if spec.category == category and spec.engine == engine and spec.variant == variant:
+            if (
+                spec.category == category
+                and spec.engine == engine
+                and spec.variant == variant
+            ):
                 return spec
         return None
 

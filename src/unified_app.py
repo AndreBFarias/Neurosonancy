@@ -6,9 +6,9 @@ from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import ContentSwitcher, Footer
 
-from src.core.theme import CSS_COMMON, COLORS
+from src.core.theme import CSS_COMMON
 from src.core.widgets import NavSidebar, MediaHeader
-from src.core.media_bridge import MPRISBridge, TrackInfo
+from src.core.media_bridge import MPRISBridge
 from src.core.tray_companion import TrayCompanion
 from src.modules.ascii_control.ui.panel import AsciiControlPanel
 from src.modules.voice_trainer.ui.panel import VoiceTrainerPanel
@@ -29,25 +29,28 @@ class NeurosonancyUnifiedApp(App):
         Binding("ctrl+t", "toggle_tray", "Tray", show=True),
     ]
 
-    CSS = CSS_COMMON + f"""
-    #body-layout {{
+    CSS = (
+        CSS_COMMON
+        + """
+    #body-layout {
         height: 1fr;
         layout: horizontal;
-    }}
+    }
 
-    ContentSwitcher {{
+    ContentSwitcher {
         width: 1fr;
         min-width: 60;
         height: 100%;
-    }}
+    }
 
     #panel-monitor,
     #panel-trainer,
-    #panel-clone {{
+    #panel-clone {
         width: 100%;
         height: 100%;
-    }}
+    }
     """
+    )
 
     def __init__(self) -> None:
         super().__init__()
@@ -124,24 +127,33 @@ class NeurosonancyUnifiedApp(App):
                 self.query_one("#nav-sidebar", NavSidebar).set_tray_status(True)
                 self.notify("Tray ativado", severity="information")
 
-    def on_media_header_play_pause_requested(self, event: MediaHeader.PlayPauseRequested) -> None:
+    def on_media_header_play_pause_requested(
+        self, event: MediaHeader.PlayPauseRequested
+    ) -> None:
         self.run_worker(self._mpris.play_pause, exclusive=False)
 
-    def on_media_header_next_track_requested(self, event: MediaHeader.NextTrackRequested) -> None:
+    def on_media_header_next_track_requested(
+        self, event: MediaHeader.NextTrackRequested
+    ) -> None:
         self.run_worker(self._mpris.next_track, exclusive=False)
 
-    def on_media_header_prev_track_requested(self, event: MediaHeader.PrevTrackRequested) -> None:
+    def on_media_header_prev_track_requested(
+        self, event: MediaHeader.PrevTrackRequested
+    ) -> None:
         self.run_worker(self._mpris.prev_track, exclusive=False)
 
     def on_media_header_volume_changed(self, event: MediaHeader.VolumeChanged) -> None:
         from src.core.widgets.media_header import _set_system_volume
+
         _set_system_volume(event.volume)
         self.run_worker(
             lambda: self._mpris.set_volume(event.volume),
             exclusive=False,
         )
 
-    def on_media_header_model_change_requested(self, event: MediaHeader.ModelChangeRequested) -> None:
+    def on_media_header_model_change_requested(
+        self, event: MediaHeader.ModelChangeRequested
+    ) -> None:
         self.run_worker(
             lambda: self._switch_model(event.model_display_name),
             exclusive=True,
@@ -150,6 +162,7 @@ class NeurosonancyUnifiedApp(App):
 
     async def _switch_model(self, display_name: str) -> None:
         from src.core.model_manager import ModelManager
+
         manager = ModelManager()
         spec = manager.get_spec_by_display_name(display_name)
         if spec is None:

@@ -5,7 +5,7 @@ import threading
 import time
 import logging
 from typing import Optional, Callable, Dict, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from collections import deque
 
@@ -38,12 +38,13 @@ MOOD_PRESETS: Dict[Mood, SynthParams] = {
     Mood.CHILL: SynthParams(bpm=120, detune=0.01, attack=0.05, sidechain_depth=0.4),
     Mood.NORMAL: SynthParams(bpm=138, detune=0.02, attack=0.02, sidechain_depth=0.6),
     Mood.INTENSE: SynthParams(bpm=150, detune=0.05, attack=0.005, sidechain_depth=0.85),
-    Mood.DARK: SynthParams(bpm=130, detune=0.08, attack=0.01, filter_cutoff=0.4, sidechain_depth=0.7),
+    Mood.DARK: SynthParams(
+        bpm=130, detune=0.08, attack=0.01, filter_cutoff=0.4, sidechain_depth=0.7
+    ),
 }
 
 
 class SuperSawOscillator:
-
     def __init__(self, num_voices: int = 7):
         self.num_voices = num_voices
         self._phase = np.zeros(num_voices)
@@ -64,7 +65,6 @@ class SuperSawOscillator:
 
 
 class SidechainCompressor:
-
     def __init__(self, sample_rate: int = SAMPLE_RATE):
         self.sample_rate = sample_rate
         self._phase = 0.0
@@ -84,7 +84,6 @@ class SidechainCompressor:
 
 
 class LowPassFilter:
-
     def __init__(self):
         self._prev = 0.0
 
@@ -102,7 +101,6 @@ class LowPassFilter:
 
 
 class NeurosonancyMusic:
-
     def __init__(self, metrics_getter: Optional[Callable[[], Dict[str, Any]]] = None):
         self._metrics_getter = metrics_getter
         self._params = SynthParams()
@@ -188,7 +186,9 @@ class NeurosonancyMusic:
             size = proc.get("size", 0)
             maxsize = proc.get("maxsize", 20)
             pressure = size / max(maxsize, 1)
-            self._params.attack = max(0.001, MOOD_PRESETS[self._mood].attack * (1 - pressure * 0.8))
+            self._params.attack = max(
+                0.001, MOOD_PRESETS[self._mood].attack * (1 - pressure * 0.8)
+            )
 
         except Exception as e:
             logger.debug(f"Metrics update failed: {e}")
@@ -207,7 +207,9 @@ class NeurosonancyMusic:
             audio = audio + noise
 
         audio = self._lpf.apply(audio, self._params.filter_cutoff)
-        audio = self._sidechain.apply(audio, self._params.bpm, self._params.sidechain_depth)
+        audio = self._sidechain.apply(
+            audio, self._params.bpm, self._params.sidechain_depth
+        )
 
         audio = np.clip(audio * 0.5, -1.0, 1.0)
 
@@ -218,6 +220,7 @@ class NeurosonancyMusic:
 
         try:
             import sounddevice as sd
+
             has_audio = True
         except ImportError:
             has_audio = False
@@ -229,8 +232,8 @@ class NeurosonancyMusic:
                 stream = sd.OutputStream(
                     samplerate=SAMPLE_RATE,
                     channels=1,
-                    dtype='float32',
-                    blocksize=CHUNK_SIZE
+                    dtype="float32",
+                    blocksize=CHUNK_SIZE,
                 )
                 stream.start()
             except Exception as e:
@@ -254,7 +257,7 @@ class NeurosonancyMusic:
                 except Exception:
                     pass
 
-            waveform = chunk[::CHUNK_SIZE // 32].tolist()
+            waveform = chunk[:: CHUNK_SIZE // 32].tolist()
             self._audio_buffer.append(waveform)
 
             if self._waveform_callback:

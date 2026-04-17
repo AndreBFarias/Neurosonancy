@@ -13,10 +13,21 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.screen import ModalScreen
 from textual.widgets import (
-    Header, Footer, Static, Button, Label,
-    Input, ProgressBar, RichLog, RadioSet, RadioButton, Select, Checkbox, TextArea
+    Header,
+    Footer,
+    Static,
+    Button,
+    Label,
+    Input,
+    ProgressBar,
+    RichLog,
+    RadioSet,
+    RadioButton,
+    Select,
+    Checkbox,
+    TextArea,
 )
-from textual.containers import Vertical, Horizontal, VerticalScroll, Center
+from textual.containers import Vertical, Horizontal, VerticalScroll
 from textual.reactive import reactive
 
 from src.core.base_app import NeurosonancyBaseApp
@@ -35,7 +46,7 @@ CONFIG_FILE = ROOT_DIR / "data_input" / "clone_voice_config.json"
 def load_saved_config() -> Dict[str, Any]:
     if CONFIG_FILE.exists():
         try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Erro ao carregar config: {e}")
@@ -45,7 +56,7 @@ def load_saved_config() -> Dict[str, Any]:
 def save_config(config: Dict[str, Any]) -> None:
     try:
         CONFIG_FILE.parent.mkdir(parents=True, exist_ok=True)
-        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        with open(CONFIG_FILE, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
     except Exception as e:
         logger.error(f"Erro ao salvar config: {e}")
@@ -69,7 +80,6 @@ class StatusPanel(Static):
 
 
 class TrainingCompleteModal(ModalScreen):
-
     CSS = """
     TrainingCompleteModal {
         align: center middle;
@@ -153,7 +163,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     _save_timer = None
     _config_dirty = False
 
-    CSS = CSS_COMMON + """
+    CSS = (
+        CSS_COMMON
+        + """
     #main-container {
         layout: horizontal;
         height: 100%;
@@ -490,6 +502,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         margin: 0;
     }
     """
+    )
 
     BINDINGS = [
         Binding("escape", "back_to_menu", "Menu", show=True, priority=True),
@@ -531,7 +544,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     yield Input(placeholder="sk_xxxxxxxx...", id="input-api-key")
 
                     yield Label("Voice ID:", classes="setting-label")
-                    yield Input(placeholder="ID da voz no ElevenLabs", id="input-voice-id")
+                    yield Input(
+                        placeholder="ID da voz no ElevenLabs", id="input-voice-id"
+                    )
 
                     yield Label("Nome do Dataset:", classes="setting-label")
                     yield Input(placeholder="Ex: MinhaVoz", id="input-dataset-name")
@@ -541,14 +556,18 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
                     yield Label("Modelo TTS:", classes="setting-label")
                     with RadioSet(id="model-selector"):
-                        yield RadioButton("Multilingual v2", id="model-multi-v2", value=True)
+                        yield RadioButton(
+                            "Multilingual v2", id="model-multi-v2", value=True
+                        )
                         yield RadioButton("Turbo v2.5", id="model-turbo")
                         yield RadioButton("Flash v2", id="model-flash")
 
                     yield Static("", classes="section-separator")
 
                     yield Label("Arquivo de Frases:", classes="setting-label")
-                    yield Input(placeholder="Caminho do arquivo .md", id="input-phrases-file")
+                    yield Input(
+                        placeholder="Caminho do arquivo .md", id="input-phrases-file"
+                    )
                     yield Button("PROCURAR", id="btn-browse")
                     yield Label("", id="file-status", classes="file-hint")
 
@@ -560,8 +579,14 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     with Vertical(id="generator-panel"):
                         yield Static("GERADOR", classes="panel-title")
                         yield StatusPanel(id="status-indicator")
-                        yield Static("0 / 50 frases", id="counter-display", classes="counter-display")
-                        yield ProgressBar(id="generation-progress", total=100, show_eta=False)
+                        yield Static(
+                            "0 / 50 frases",
+                            id="counter-display",
+                            classes="counter-display",
+                        )
+                        yield ProgressBar(
+                            id="generation-progress", total=100, show_eta=False
+                        )
                         yield Static("", id="current-phrase", classes="current-phrase")
                         yield Button("INICIAR", id="btn-generate")
                         yield Button("PARAR", id="btn-stop", disabled=True)
@@ -569,7 +594,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     with VerticalScroll(id="training-panel"):
                         yield Static("TREINAR", classes="panel-title")
                         yield Label("Dataset:", classes="setting-label")
-                        yield Select([], id="dataset-selector", prompt="Selecione o dataset")
+                        yield Select(
+                            [], id="dataset-selector", prompt="Selecione o dataset"
+                        )
                         yield Button("ATUALIZAR", id="btn-refresh-datasets")
                         yield Label("Usar melhores:", classes="setting-label")
                         with Horizontal(classes="use-top-row"):
@@ -577,9 +604,17 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                             yield Input(value="10", id="input-top-n", type="integer")
                         yield Label("Epochs (Coqui):", classes="setting-label")
                         yield Input(value="100", id="input-epochs", type="integer")
-                        yield ProgressBar(id="training-progress", total=100, show_eta=False)
-                        yield Static("[dim]Chatterbox: zero-shot (embeddings)[/]", classes="model-hint")
-                        yield Static("[dim]Coqui: fine-tuning real (lento)[/]", classes="model-hint")
+                        yield ProgressBar(
+                            id="training-progress", total=100, show_eta=False
+                        )
+                        yield Static(
+                            "[dim]Chatterbox: zero-shot (embeddings)[/]",
+                            classes="model-hint",
+                        )
+                        yield Static(
+                            "[dim]Coqui: fine-tuning real (lento)[/]",
+                            classes="model-hint",
+                        )
                         with Horizontal(classes="train-buttons"):
                             yield Button("CHATTERBOX", id="btn-train-chatterbox")
                             yield Button("COQUI", id="btn-train-coqui")
@@ -588,7 +623,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     with Vertical(id="test-left"):
                         yield Static("TESTAR", classes="panel-title")
                         yield Label("Modelo treinado:", classes="setting-label")
-                        yield Select([], id="model-selector-test", prompt="Selecione o modelo")
+                        yield Select(
+                            [], id="model-selector-test", prompt="Selecione o modelo"
+                        )
                         yield Button("ATUALIZAR", id="btn-refresh-models")
 
                     with Vertical(id="test-right"):
@@ -596,13 +633,21 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                         yield TextArea(id="input-test-text")
                         yield Button("OUVIR", id="btn-play")
 
-                yield RichLog(id="output-log", markup=True, highlight=True, wrap=True, classes="hidden-log")
+                yield RichLog(
+                    id="output-log",
+                    markup=True,
+                    highlight=True,
+                    wrap=True,
+                    classes="hidden-log",
+                )
 
         yield Footer()
 
     def on_mount(self) -> None:
         self._log(f"[bold {COLORS['accent_primary']}]Clone Voice Dataset Generator[/]")
-        self._log(f"[{COLORS['text_muted']}]Gera datasets de voz via ElevenLabs para treinar modelos TTS[/]")
+        self._log(
+            f"[{COLORS['text_muted']}]Gera datasets de voz via ElevenLabs para treinar modelos TTS[/]"
+        )
         self._log("")
 
         self._load_saved_settings()
@@ -639,11 +684,17 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             if config.get("voice_id"):
                 self.query_one("#input-voice-id", Input).value = config["voice_id"]
             if config.get("dataset_name"):
-                self.query_one("#input-dataset-name", Input).value = config["dataset_name"]
+                self.query_one("#input-dataset-name", Input).value = config[
+                    "dataset_name"
+                ]
             if config.get("phrase_count"):
-                self.query_one("#input-phrase-count", Input).value = str(config["phrase_count"])
+                self.query_one("#input-phrase-count", Input).value = str(
+                    config["phrase_count"]
+                )
             if config.get("phrases_file"):
-                self.query_one("#input-phrases-file", Input).value = config["phrases_file"]
+                self.query_one("#input-phrases-file", Input).value = config[
+                    "phrases_file"
+                ]
             if config.get("output_dir"):
                 self.query_one("#input-output-dir", Input).value = config["output_dir"]
 
@@ -664,10 +715,16 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             config = {
                 "api_key": self.query_one("#input-api-key", Input).value.strip(),
                 "voice_id": self.query_one("#input-voice-id", Input).value.strip(),
-                "dataset_name": self.query_one("#input-dataset-name", Input).value.strip(),
-                "phrase_count": self.query_one("#input-phrase-count", Input).value.strip(),
+                "dataset_name": self.query_one(
+                    "#input-dataset-name", Input
+                ).value.strip(),
+                "phrase_count": self.query_one(
+                    "#input-phrase-count", Input
+                ).value.strip(),
                 "model_id": self._get_model_id(),
-                "phrases_file": self.query_one("#input-phrases-file", Input).value.strip(),
+                "phrases_file": self.query_one(
+                    "#input-phrases-file", Input
+                ).value.strip(),
                 "output_dir": self.query_one("#input-output-dir", Input).value.strip(),
             }
             save_config(config)
@@ -683,8 +740,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         if self._save_timer:
             self._save_timer.stop()
         self._save_timer = self.set_timer(
-            self.SAVE_DEBOUNCE_MS / 1000,
-            self._execute_save
+            self.SAVE_DEBOUNCE_MS / 1000, self._execute_save
         )
 
     def _execute_save(self) -> None:
@@ -703,8 +759,12 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     def on_input_changed(self, event: Input.Changed) -> None:
         input_ids = [
-            "input-api-key", "input-voice-id", "input-dataset-name",
-            "input-phrase-count", "input-phrases-file", "input-output-dir"
+            "input-api-key",
+            "input-voice-id",
+            "input-dataset-name",
+            "input-phrase-count",
+            "input-phrases-file",
+            "input-output-dir",
         ]
         if event.input.id in input_ids:
             self._schedule_save()
@@ -786,7 +846,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         if not self._validate_api_key(api_key):
             self.notify_error("API Key invalida")
-            self._log(f"[{COLORS['error']}]Formato de API Key invalido (deve comecar com sk_)[/]")
+            self._log(
+                f"[{COLORS['error']}]Formato de API Key invalido (deve comecar com sk_)[/]"
+            )
             return
 
         voice_id = self.query_one("#input-voice-id", Input).value.strip()
@@ -796,7 +858,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             return
 
         try:
-            self.target_phrases = int(self.query_one("#input-phrase-count", Input).value)
+            self.target_phrases = int(
+                self.query_one("#input-phrase-count", Input).value
+            )
         except ValueError:
             self.notify_error("Quantidade invalida")
             return
@@ -827,7 +891,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._generation_thread = threading.Thread(
             target=self._run_generation,
             args=(api_key, voice_id, dataset_name, model_id, phrases_file, output_dir),
-            daemon=True
+            daemon=True,
         )
         self._generation_thread.start()
 
@@ -841,7 +905,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         output_dir: Path,
     ) -> None:
         try:
-            from src.modules.clone_voice.core.generator import DatasetManager, DatasetConfig
+            from src.modules.clone_voice.core.generator import (
+                DatasetManager,
+                DatasetConfig,
+            )
 
             config = DatasetConfig(
                 name=dataset_name,
@@ -855,10 +922,14 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self._dataset_manager = DatasetManager(config, api_key=api_key)
 
             def on_progress(current: int, total: int, phrase: str):
-                self.call_from_thread(self._on_generation_progress, current, total, phrase)
+                self.call_from_thread(
+                    self._on_generation_progress, current, total, phrase
+                )
 
             def on_phrase_generated(index: int, phrase: str, audio_path: Path):
-                self.call_from_thread(self._on_phrase_generated, index, phrase, audio_path)
+                self.call_from_thread(
+                    self._on_phrase_generated, index, phrase, audio_path
+                )
 
             def on_error(error: str):
                 self.call_from_thread(self._on_generation_error, error)
@@ -871,7 +942,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             self.call_from_thread(self._set_status, "generating")
 
             if not self._dataset_manager.initialize():
-                self.call_from_thread(self._on_generation_failed, "Falha ao inicializar ElevenLabs")
+                self.call_from_thread(
+                    self._on_generation_failed, "Falha ao inicializar ElevenLabs"
+                )
                 return
 
             stats = self._dataset_manager.generate_dataset()
@@ -882,7 +955,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 self.call_from_thread(self._on_generation_complete, stats)
 
         except ImportError as e:
-            self.call_from_thread(self._on_generation_failed, f"Pacote nao instalado: {e}")
+            self.call_from_thread(
+                self._on_generation_failed, f"Pacote nao instalado: {e}"
+            )
         except Exception as e:
             self.call_from_thread(self._on_generation_failed, str(e))
 
@@ -901,7 +976,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
     def _on_phrase_generated(self, index: int, phrase: str, audio_path: Path) -> None:
         short_phrase = phrase[:35] + "..." if len(phrase) > 35 else phrase
-        self._log(f"[{COLORS['success']}][{index+1}][/] {short_phrase}")
+        self._log(f"[{COLORS['success']}][{index + 1}][/] {short_phrase}")
 
     def _on_generation_error(self, error: str) -> None:
         self._log(f"[{COLORS['error']}]Erro: {error}[/]")
@@ -925,7 +1000,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self.query_one("#btn-stop", Button).disabled = True
 
         self._log("")
-        self._log(f"[{COLORS['warning']}]Interrompido: {stats.total_generated}/{stats.total_requested}[/]")
+        self._log(
+            f"[{COLORS['warning']}]Interrompido: {stats.total_generated}/{stats.total_requested}[/]"
+        )
         self.notify_warning("Geracao interrompida")
 
     def _on_generation_complete(self, stats) -> None:
@@ -937,7 +1014,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         self._log("")
         self._log(f"[bold {COLORS['success']}]CONCLUIDO[/]")
-        self._log(f"[{COLORS['text_primary']}]Gerados: {stats.total_generated}/{stats.total_requested} | Taxa: {stats.success_rate:.0f}%[/]")
+        self._log(
+            f"[{COLORS['text_primary']}]Gerados: {stats.total_generated}/{stats.total_requested} | Taxa: {stats.success_rate:.0f}%[/]"
+        )
 
         if self._dataset_manager:
             output_dir = self._dataset_manager.config.output_dir
@@ -978,7 +1057,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             option_id = str(event.value)
             if option_id in self._datasets_map:
                 self._selected_dataset = self._datasets_map[option_id]
-                self._log(f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]")
+                self._log(
+                    f"[{COLORS['info']}]Selecionado: {self._selected_dataset.name}[/]"
+                )
         elif event.select.id == "model-selector-test" and event.value != Select.BLANK:
             option_id = str(event.value)
             if option_id in self._models_map:
@@ -989,14 +1070,15 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         try:
             result = subprocess.run(
                 [
-                    "zenity", "--file-selection",
+                    "zenity",
+                    "--file-selection",
                     "--title=Selecionar Arquivo de Frases",
                     "--file-filter=Markdown (*.md) | *.md",
                     "--file-filter=Texto (*.txt) | *.txt",
-                    "--file-filter=Todos (*) | *"
+                    "--file-filter=Todos (*) | *",
                 ],
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode == 0 and result.stdout.strip():
                 filepath = Path(result.stdout.strip())
@@ -1012,12 +1094,17 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         if filepath.exists():
             from src.modules.clone_voice.core.generator import PhraseParser
+
             parser = PhraseParser()
             if parser.parse_file(filepath):
                 stats = parser.get_stats()
                 categories = len(parser.get_category_names())
-                status_label.update(f"[{COLORS['success']}]{stats['total']} frases, {categories} cats[/]")
-                self._log(f"[{COLORS['success']}]{filepath.name}: {stats['total']} frases[/]")
+                status_label.update(
+                    f"[{COLORS['success']}]{stats['total']} frases, {categories} cats[/]"
+                )
+                self._log(
+                    f"[{COLORS['success']}]{filepath.name}: {stats['total']} frases[/]"
+                )
             else:
                 status_label.update(f"[{COLORS['error']}]Arquivo vazio[/]")
         else:
@@ -1026,15 +1113,18 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     def _update_file_status(self) -> None:
         status_label = self.query_one("#file-status", Label)
         current_file = self.query_one("#input-phrases-file", Input).value.strip()
-        
+
         if current_file:
             filepath = Path(current_file)
             if filepath.exists():
                 from src.modules.clone_voice.core.generator import PhraseParser
+
                 parser = PhraseParser()
                 if parser.parse_file(filepath):
                     stats = parser.get_stats()
-                    status_label.update(f"[{COLORS['success']}]{stats['total']} frases[/]")
+                    status_label.update(
+                        f"[{COLORS['success']}]{stats['total']} frases[/]"
+                    )
                 else:
                     status_label.update(f"[{COLORS['warning']}]Arquivo vazio[/]")
             else:
@@ -1056,7 +1146,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 metadata = item / "metadata.json"
                 wavs_dir = item / "wavs"
                 if metadata.exists() and wavs_dir.exists():
-                    audio_count = len(list(wavs_dir.glob("*.mp3"))) + len(list(wavs_dir.glob("*.wav")))
+                    audio_count = len(list(wavs_dir.glob("*.mp3"))) + len(
+                        list(wavs_dir.glob("*.wav"))
+                    )
                     if audio_count > 0:
                         datasets.append((item, audio_count))
 
@@ -1117,15 +1209,26 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._log("")
         self._log(f"[{COLORS['info']}]Treinar {model_type.upper()}...[/]")
         if use_top:
-            self._log(f"[{COLORS['text_muted']}]Usando TOP {top_n} audios de {self._selected_dataset.name}[/]")
+            self._log(
+                f"[{COLORS['text_muted']}]Usando TOP {top_n} audios de {self._selected_dataset.name}[/]"
+            )
         else:
-            self._log(f"[{COLORS['text_muted']}]Usando todos audios de {self._selected_dataset.name}[/]")
+            self._log(
+                f"[{COLORS['text_muted']}]Usando todos audios de {self._selected_dataset.name}[/]"
+            )
         self._log(f"[{COLORS['text_muted']}]Epochs: {epochs}[/]")
 
         self._training_thread = threading.Thread(
             target=self._run_training,
-            args=(model_type, self._selected_dataset, output_dir, epochs, use_top, top_n),
-            daemon=True
+            args=(
+                model_type,
+                self._selected_dataset,
+                output_dir,
+                epochs,
+                use_top,
+                top_n,
+            ),
+            daemon=True,
         )
         self._training_thread.start()
 
@@ -1136,11 +1239,13 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         output_dir: Path,
         epochs: int,
         use_top: bool = True,
-        top_n: int = 10
+        top_n: int = 10,
     ) -> None:
         try:
             from src.modules.clone_voice.core.training import (
-                TrainingConfig, ChatterboxTrainer, CoquiTrainer
+                TrainingConfig,
+                ChatterboxTrainer,
+                CoquiTrainer,
             )
             from src.modules.clone_voice.core import AudioQualityAnalyzer
 
@@ -1149,19 +1254,26 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             unified_audio_path = None
 
             if use_top:
-                self.call_from_thread(self._log, f"[{COLORS['info']}]Selecionando TOP {top_n} audios...[/]")
+                self.call_from_thread(
+                    self._log,
+                    f"[{COLORS['info']}]Selecionando TOP {top_n} audios...[/]",
+                )
 
                 analyzer = AudioQualityAnalyzer()
                 result = analyzer.analyze_dataset(dataset_dir)
 
                 if result.analyzed_files == 0:
-                    self.call_from_thread(self._on_training_error, "Nenhum audio no dataset")
+                    self.call_from_thread(
+                        self._on_training_error, "Nenhum audio no dataset"
+                    )
                     return
 
                 selection = analyzer.get_diverse_selection(top_n)
 
                 if not selection:
-                    self.call_from_thread(self._on_training_error, "Falha ao selecionar audios")
+                    self.call_from_thread(
+                        self._on_training_error, "Falha ao selecionar audios"
+                    )
                     return
 
                 selection_dir = dataset_dir / f"top_{top_n}_selection"
@@ -1169,19 +1281,22 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
                 self.call_from_thread(
                     self._log,
-                    f"[{COLORS['info']}]Concatenando {len(selection)} audios em arquivo unico...[/]"
+                    f"[{COLORS['info']}]Concatenando {len(selection)} audios em arquivo unico...[/]",
                 )
 
-                unified_audio_path = analyzer.create_unified_reference(selection, selection_dir)
+                unified_audio_path = analyzer.create_unified_reference(
+                    selection, selection_dir
+                )
 
                 if unified_audio_path and unified_audio_path.exists():
-                    duration = unified_audio_path.stat().st_size / (22050 * 2)
                     self.call_from_thread(
                         self._log,
-                        f"[{COLORS['success']}]Audio unificado: {unified_audio_path.name}[/]"
+                        f"[{COLORS['success']}]Audio unificado: {unified_audio_path.name}[/]",
                     )
                 else:
-                    self.call_from_thread(self._on_training_error, "Falha ao criar audio unificado")
+                    self.call_from_thread(
+                        self._on_training_error, "Falha ao criar audio unificado"
+                    )
                     return
 
                 wavs_dir = selection_dir / "wavs"
@@ -1191,17 +1306,19 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                     dst = wavs_dir / m.file_name
                     if not dst.exists():
                         import shutil
+
                         shutil.copy(src, dst)
 
                 training_dataset_dir = selection_dir
 
                 self.call_from_thread(
                     self._log,
-                    f"[{COLORS['success']}]TOP {top_n}: {len(selection)} audios prontos[/]"
+                    f"[{COLORS['success']}]TOP {top_n}: {len(selection)} audios prontos[/]",
                 )
 
             import re
-            base_name = re.sub(r'_\d{8}_\d{6}$', '', dataset_dir.name)
+
+            base_name = re.sub(r"_\d{8}_\d{6}$", "", dataset_dir.name)
 
             config = TrainingConfig(
                 dataset_dir=training_dataset_dir,
@@ -1277,12 +1394,16 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         if stats.is_completed:
             self._log("")
             self._log(f"[bold {COLORS['success']}]TREINAMENTO OK[/]")
-            self._log(f"[{COLORS['text_muted']}]Epochs: {stats.current_epoch} | Loss: {stats.best_loss:.4f}[/]")
+            self._log(
+                f"[{COLORS['text_muted']}]Epochs: {stats.current_epoch} | Loss: {stats.best_loss:.4f}[/]"
+            )
 
             if stats.output_path:
                 self._last_output_dir = stats.output_path
                 self._log(f"[{COLORS['neon_cyan']}]{stats.output_path}[/]")
-                self.push_screen(TrainingCompleteModal(stats.output_path, stats.model_type))
+                self.push_screen(
+                    TrainingCompleteModal(stats.output_path, stats.model_type)
+                )
 
             self.notify_success("Treinamento concluido")
         else:
@@ -1313,9 +1434,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self._log(f"[{COLORS['text_muted']}]Dataset: {self._selected_dataset.name}[/]")
 
         threading.Thread(
-            target=self._run_audio_analysis,
-            args=(self._selected_dataset,),
-            daemon=True
+            target=self._run_audio_analysis, args=(self._selected_dataset,), daemon=True
         ).start()
 
     def _run_audio_analysis(self, dataset_path: Path) -> None:
@@ -1327,7 +1446,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             def on_progress(current: int, total: int, filename: str):
                 self.call_from_thread(
                     self._log,
-                    f"[{COLORS['text_muted']}]Analisando {current}/{total}: {filename}[/]"
+                    f"[{COLORS['text_muted']}]Analisando {current}/{total}: {filename}[/]",
                 )
 
             analyzer.set_progress_callback(on_progress)
@@ -1337,7 +1456,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             if result.analyzed_files == 0:
                 self.call_from_thread(
                     self._log,
-                    f"[{COLORS['error']}]Nenhum audio encontrado no dataset[/]"
+                    f"[{COLORS['error']}]Nenhum audio encontrado no dataset[/]",
                 )
                 return
 
@@ -1346,32 +1465,36 @@ class CloneVoiceApp(NeurosonancyBaseApp):
             if not selection:
                 self.call_from_thread(
                     self._log,
-                    f"[{COLORS['error']}]Nao foi possivel selecionar audios[/]"
+                    f"[{COLORS['error']}]Nao foi possivel selecionar audios[/]",
                 )
                 return
 
             output_path = dataset_path / "top_10_selection"
-            exported = analyzer.export_selection(selection, output_path)
+            analyzer.export_selection(selection, output_path)
 
-            self.call_from_thread(self._on_audio_analysis_complete, result, selection, output_path)
+            self.call_from_thread(
+                self._on_audio_analysis_complete, result, selection, output_path
+            )
 
         except Exception as e:
             self.call_from_thread(
-                self._log,
-                f"[{COLORS['error']}]Erro na analise: {e}[/]"
+                self._log, f"[{COLORS['error']}]Erro na analise: {e}[/]"
             )
 
     def _on_audio_analysis_complete(
-        self,
-        result,
-        selection: list,
-        output_path: Path
+        self, result, selection: list, output_path: Path
     ) -> None:
         self._log("")
         self._log(f"[bold {COLORS['success']}]ANALISE COMPLETA[/]")
-        self._log(f"[{COLORS['text_primary']}]Arquivos analisados: {result.analyzed_files}[/]")
-        self._log(f"[{COLORS['text_primary']}]Duracao total: {result.total_duration_seconds:.1f}s[/]")
-        self._log(f"[{COLORS['text_primary']}]Score medio: {result.avg_quality_score:.1f}[/]")
+        self._log(
+            f"[{COLORS['text_primary']}]Arquivos analisados: {result.analyzed_files}[/]"
+        )
+        self._log(
+            f"[{COLORS['text_primary']}]Duracao total: {result.total_duration_seconds:.1f}s[/]"
+        )
+        self._log(
+            f"[{COLORS['text_primary']}]Score medio: {result.avg_quality_score:.1f}[/]"
+        )
         self._log("")
         self._log(f"[bold {COLORS['neon_cyan']}]TOP 10 AUDIOS SELECIONADOS:[/]")
 
@@ -1402,6 +1525,7 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         try:
             from src.modules.clone_voice.core.generator import ElevenLabsClient
+
             client = ElevenLabsClient(api_key=api_key)
             if client.validate_api_key():
                 self._log(f"[{COLORS['success']}]API Key valida[/]")
@@ -1425,7 +1549,9 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
             models = []
             for item in trained_models_dir.iterdir():
-                if item.is_dir() and (item.name.endswith("_chatterbox") or item.name.endswith("_coqui")):
+                if item.is_dir() and (
+                    item.name.endswith("_chatterbox") or item.name.endswith("_coqui")
+                ):
                     models.append(item)
 
             if not models:
@@ -1469,12 +1595,12 @@ class CloneVoiceApp(NeurosonancyBaseApp):
         self.query_one("#btn-play", Button).disabled = True
 
         self._log("")
-        self._log(f"[{COLORS['info']}]Gerando audio com {self._selected_model.name}...[/]")
+        self._log(
+            f"[{COLORS['info']}]Gerando audio com {self._selected_model.name}...[/]"
+        )
 
         threading.Thread(
-            target=self._run_inference,
-            args=(self._selected_model, text),
-            daemon=True
+            target=self._run_inference, args=(self._selected_model, text), daemon=True
         ).start()
 
     def _run_inference(self, model_path: Path, text: str) -> None:
@@ -1488,12 +1614,20 @@ class CloneVoiceApp(NeurosonancyBaseApp):
                 self._run_coqui_inference(model_path, text, output_file)
 
             if output_file.exists():
-                self.call_from_thread(self._log, f"[{COLORS['success']}]Audio gerado![/]")
-                self.call_from_thread(self._log, f"[{COLORS['text_muted']}]Reproduzindo...[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['success']}]Audio gerado![/]"
+                )
+                self.call_from_thread(
+                    self._log, f"[{COLORS['text_muted']}]Reproduzindo...[/]"
+                )
                 self._play_audio_file(output_file)
-                self.call_from_thread(self._log, f"[{COLORS['info']}]Reproducao concluida[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['info']}]Reproducao concluida[/]"
+                )
             else:
-                self.call_from_thread(self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]")
+                self.call_from_thread(
+                    self._log, f"[{COLORS['error']}]Falha ao gerar audio[/]"
+                )
 
         except Exception as e:
             self.call_from_thread(self._log, f"[{COLORS['error']}]Erro: {e}[/]")
@@ -1507,10 +1641,10 @@ class CloneVoiceApp(NeurosonancyBaseApp):
 
         sample_rate, audio_data = wavfile.read(str(audio_path))
 
-        if audio_data.dtype == 'int16':
-            audio_data = audio_data.astype('float32') / 32768.0
-        elif audio_data.dtype == 'int32':
-            audio_data = audio_data.astype('float32') / 2147483648.0
+        if audio_data.dtype == "int16":
+            audio_data = audio_data.astype("float32") / 32768.0
+        elif audio_data.dtype == "int32":
+            audio_data = audio_data.astype("float32") / 2147483648.0
 
         sd.play(audio_data, sample_rate)
         sd.wait()
@@ -1518,12 +1652,16 @@ class CloneVoiceApp(NeurosonancyBaseApp):
     def _enable_play_button(self) -> None:
         self.query_one("#btn-play", Button).disabled = False
 
-    def _run_chatterbox_inference(self, model_path: Path, text: str, output_file: Path) -> None:
+    def _run_chatterbox_inference(
+        self, model_path: Path, text: str, output_file: Path
+    ) -> None:
         python_exec = str(ROOT_DIR / "venv_chatterbox" / "bin" / "python")
         reference_audio = model_path / "reference.wav"
 
         if not reference_audio.exists():
-            raise FileNotFoundError(f"Audio de referencia nao encontrado: {reference_audio}")
+            raise FileNotFoundError(
+                f"Audio de referencia nao encontrado: {reference_audio}"
+            )
 
         script = f'''
 import torch
@@ -1541,20 +1679,21 @@ torchaudio.save("{output_file}", audio_cpu, 24000)
 print("OK")
 '''
         result = subprocess.run(
-            [python_exec, "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=120
+            [python_exec, "-c", script], capture_output=True, text=True, timeout=120
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr)
 
-    def _run_coqui_inference(self, model_path: Path, text: str, output_file: Path) -> None:
+    def _run_coqui_inference(
+        self, model_path: Path, text: str, output_file: Path
+    ) -> None:
         python_exec = str(ROOT_DIR / "venv_coqui" / "bin" / "python")
         reference_audio = model_path / "reference_speaker.wav"
 
         if not reference_audio.exists():
-            raise FileNotFoundError(f"Audio de referencia nao encontrado: {reference_audio}")
+            raise FileNotFoundError(
+                f"Audio de referencia nao encontrado: {reference_audio}"
+            )
 
         script = f'''
 from TTS.api import TTS
@@ -1563,10 +1702,7 @@ tts.tts_to_file(text="{text}", file_path="{output_file}", speaker_wav="{referenc
 print("OK")
 '''
         result = subprocess.run(
-            [python_exec, "-c", script],
-            capture_output=True,
-            text=True,
-            timeout=120
+            [python_exec, "-c", script], capture_output=True, text=True, timeout=120
         )
         if result.returncode != 0:
             raise RuntimeError(result.stderr)

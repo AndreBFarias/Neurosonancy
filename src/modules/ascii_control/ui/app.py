@@ -3,20 +3,31 @@
 import asyncio
 from textual.app import ComposeResult
 from textual.widgets import Header, Footer, Static, RichLog, Input
-from textual.containers import Grid, Vertical, Horizontal
+from textual.containers import Grid, Vertical
 from textual.binding import Binding
 
 from src.core.base_app import NeurosonancyBaseApp
 from src.core.theme import CSS_COMMON, COLORS
-from src.modules.ascii_control.core import LunaBridge, LUNA_AVAILABLE, NeurosonancyMusic, create_mic_bridge
-from src.modules.ascii_control.ui.widgets import BentoBox, QueueMonitor, WaveformVisualizer, NeuroVisualizer
+from src.modules.ascii_control.core import (
+    LunaBridge,
+    LUNA_AVAILABLE,
+    NeurosonancyMusic,
+    create_mic_bridge,
+)
+from src.modules.ascii_control.ui.widgets import (
+    QueueMonitor,
+    WaveformVisualizer,
+    NeuroVisualizer,
+)
 
 
 class AsciiControlApp(NeurosonancyBaseApp):
     TITLE = "NEUROSONANCY"
     SUB_TITLE = "Monitor"
 
-    CSS = CSS_COMMON + """
+    CSS = (
+        CSS_COMMON
+        + """
     #main-grid {
         layout: grid;
         grid-size: 3 3;
@@ -96,6 +107,7 @@ class AsciiControlApp(NeurosonancyBaseApp):
         scrollbar-color-hover: #8b5cf6;
     }
     """
+    )
 
     BINDINGS = [
         Binding("escape", "back_to_menu", "Menu", show=True, priority=True),
@@ -134,8 +146,7 @@ class AsciiControlApp(NeurosonancyBaseApp):
                 yield Static(f"Mode: [{COLORS['text_muted']}]--[/]", id="mode_info")
 
         yield Input(
-            placeholder="Comando: help | status | luna: texto | clear",
-            id="cmd_input"
+            placeholder="Comando: help | status | luna: texto | clear", id="cmd_input"
         )
         yield Footer()
 
@@ -148,7 +159,9 @@ class AsciiControlApp(NeurosonancyBaseApp):
             if self.bridge.is_connected:
                 self._log(f"[{COLORS['success']}]Real-time data bridge active[/]")
             else:
-                self._log(f"[{COLORS['warning']}]Standalone Mode: Using simulated data[/]")
+                self._log(
+                    f"[{COLORS['warning']}]Standalone Mode: Using simulated data[/]"
+                )
         else:
             self._log(f"[{COLORS['warning']}]Standalone Mode: Using simulated data[/]")
 
@@ -160,7 +173,9 @@ class AsciiControlApp(NeurosonancyBaseApp):
         self.set_interval(0.1, self._update_audio_viz)
         self.set_interval(0.08, self._update_synth_viz)
 
-        self._log(f"[{COLORS['text_muted']}]Digite 'help' para ver comandos disponiveis[/]")
+        self._log(
+            f"[{COLORS['text_muted']}]Digite 'help' para ver comandos disponiveis[/]"
+        )
 
     def _get_metrics_for_music(self):
         return {
@@ -189,8 +204,12 @@ class AsciiControlApp(NeurosonancyBaseApp):
             self.query_one("#queues", QueueMonitor).update_stats(queue_stats)
 
             api = self.bridge.get_api_status()
-            success_rate = api.get("successful", 0) / max(api.get("total_requests", 1), 1) * 100
-            circuit_status = "[#ff5555]OPEN[/]" if api.get("circuit_open") else "[#50fa7b]OK[/]"
+            success_rate = (
+                api.get("successful", 0) / max(api.get("total_requests", 1), 1) * 100
+            )
+            circuit_status = (
+                "[#ff5555]OPEN[/]" if api.get("circuit_open") else "[#50fa7b]OK[/]"
+            )
             self.query_one("#api_status").update(
                 f"API: {circuit_status} ({success_rate:.0f}%)"
             )
@@ -252,7 +271,9 @@ class AsciiControlApp(NeurosonancyBaseApp):
 
         elif cmd.lower() == "status":
             self._log("[bold #bd93f9]── System Status ──[/]")
-            self._log(f"  Mode: {'Connected' if self.bridge.is_connected else 'Standalone'}")
+            self._log(
+                f"  Mode: {'Connected' if self.bridge.is_connected else 'Standalone'}"
+            )
             self._log(f"  Uptime: {self.bridge.get_uptime()}")
             api = self.bridge.get_api_status()
             self._log(f"  Requests: {api.get('total_requests', 0)}")
@@ -293,15 +314,15 @@ class AsciiControlApp(NeurosonancyBaseApp):
                         cmd,
                         stdout=asyncio.subprocess.PIPE,
                         stderr=asyncio.subprocess.PIPE,
-                        cwd="/home/andrefarias/Desenvolvimento/Neurosonancy"
+                        cwd="/home/andrefarias/Desenvolvimento/Neurosonancy",
                     )
                     stdout, stderr = await process.communicate()
 
                     if stdout:
-                        for line in stdout.decode().strip().split('\n'):
+                        for line in stdout.decode().strip().split("\n"):
                             self._log(f"[dim]{line}[/]")
                     if stderr:
-                        for line in stderr.decode().strip().split('\n'):
+                        for line in stderr.decode().strip().split("\n"):
                             self._log(f"[#ff5555]{line}[/]")
 
                 except Exception as e:

@@ -2,7 +2,6 @@
 
 import logging
 import time
-import threading
 import numpy as np
 from pathlib import Path
 from typing import Optional, Callable
@@ -11,6 +10,7 @@ import scipy.io.wavfile as wavfile
 
 try:
     import webrtcvad
+
     HAS_WEBRTCVAD = True
 except ImportError:
     HAS_WEBRTCVAD = False
@@ -49,8 +49,12 @@ class AudioRecorder:
         self.visualization_callback: Optional[Callable] = None
         self.auto_stop_callback: Optional[Callable] = None
 
-        logger.info(f"AudioRecorder initialized (SR: {sample_rate}Hz, Device: {device_id})")
-        logger.info(f"VAD: {'WebRTC' if self.use_webrtc else 'Energy-based'} (threshold: {vad_energy_threshold})")
+        logger.info(
+            f"AudioRecorder initialized (SR: {sample_rate}Hz, Device: {device_id})"
+        )
+        logger.info(
+            f"VAD: {'WebRTC' if self.use_webrtc else 'Energy-based'} (threshold: {vad_energy_threshold})"
+        )
 
     def set_visualization_callback(self, callback: Callable[[np.ndarray], None]):
         self.visualization_callback = callback
@@ -82,7 +86,9 @@ class AudioRecorder:
             if self.silence_start_time is None:
                 self.silence_start_time = time.time()
             elif time.time() - self.silence_start_time >= self.vad_silence_duration:
-                logger.info(f"Silence detected for {self.vad_silence_duration}s, auto-stopping")
+                logger.info(
+                    f"Silence detected for {self.vad_silence_duration}s, auto-stopping"
+                )
 
                 if self.auto_stop_callback:
                     try:
@@ -133,7 +139,7 @@ class AudioRecorder:
                 device=self.device_id,
                 callback=self._audio_callback,
                 blocksize=int(self.sample_rate * 0.03),
-                dtype='float32'
+                dtype="float32",
             )
 
             self.stream.start()
@@ -217,7 +223,7 @@ class AudioRecorder:
             print("Using default device")
             print()
 
-        print(f"Testing recording for 2 seconds...")
+        print("Testing recording for 2 seconds...")
         print(f"Configuration: {self.sample_rate}Hz, {self.channels} channel(s)")
         print()
 
@@ -254,7 +260,7 @@ if __name__ == "__main__":
         channels=1,
         device_id=9,
         vad_silence_duration=2.0,
-        vad_energy_threshold=300
+        vad_energy_threshold=300,
     )
 
     recorder.test_device()

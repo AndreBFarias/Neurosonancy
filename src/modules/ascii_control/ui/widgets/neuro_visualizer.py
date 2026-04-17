@@ -11,7 +11,6 @@ from rich.style import Style
 
 
 class NeuroVisualizer(Static):
-
     DEFAULT_CSS = """
     NeuroVisualizer {
         height: 7;
@@ -68,7 +67,7 @@ class NeuroVisualizer(Static):
         if np.max(np.abs(data)) > 1.0:
             data = data / 32768.0
 
-        rms = float(np.sqrt(np.mean(data ** 2)))
+        rms = float(np.sqrt(np.mean(data**2)))
         self._smoothed_rms = self._smoothed_rms * 0.7 + rms * 0.3
 
         try:
@@ -109,8 +108,8 @@ class NeuroVisualizer(Static):
                 base = 0.2 + 0.3 * (1 - beat_factor)
 
             self._smoothed_energies[i] = (
-                self._smoothed_energies[i] * 0.6 +
-                (base + random.uniform(-0.1, 0.1)) * 0.4
+                self._smoothed_energies[i] * 0.6
+                + (base + random.uniform(-0.1, 0.1)) * 0.4
             )
 
         self._render_wave()
@@ -154,7 +153,9 @@ class NeuroVisualizer(Static):
             amplitude = self._smoothed_rms * height * 1.5
             self._phase += 0.12
 
-            lines: List[List[tuple]] = [[(" ", "#282a36")] * width for _ in range(height)]
+            lines: List[List[tuple]] = [
+                [(" ", "#282a36")] * width for _ in range(height)
+            ]
 
             for x in range(width):
                 freq_mod = 1.0 + self._smoothed_energies[x % 8] * 0.5

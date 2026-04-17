@@ -6,11 +6,12 @@ Carrega, valida e persiste configurações em arquivo .env
 import os
 from pathlib import Path
 from typing import Any, Dict, Optional
-from dotenv import load_dotenv, set_key, find_dotenv
+from dotenv import load_dotenv, set_key
 
 
 class Colors:
     """Cores ANSI para terminal (definidas localmente para evitar ciclo de import)."""
+
     RESET = "\033[0m"
     BOLD = "\033[1m"
     CYAN = "\033[36m"
@@ -21,11 +22,10 @@ class Colors:
     WHITE = "\033[37m"
 
 
-
 class Settings:
     """Classe singleton para gerenciar configurações do sistema."""
 
-    _instance: Optional['Settings'] = None
+    _instance: Optional["Settings"] = None
     _initialized: bool = False
 
     def __new__(cls):
@@ -57,6 +57,7 @@ class Settings:
         """Cria arquivo .env a partir do .env.example."""
         if self.env_example.exists():
             import shutil
+
             shutil.copy(self.env_example, self.env_file)
             print(f" Arquivo .env criado em {self.env_file}")
         else:
@@ -90,13 +91,19 @@ class Settings:
 
         # === ARMAZENAMENTO ===
         self.save_audio = os.getenv("SAVE_AUDIO", "true").lower() == "true"
-        self.save_transcriptions = os.getenv("SAVE_TRANSCRIPTIONS", "true").lower() == "true"
-        self.database_path = Path(os.getenv("DATABASE_PATH", "./data/transcriptions.db"))
+        self.save_transcriptions = (
+            os.getenv("SAVE_TRANSCRIPTIONS", "true").lower() == "true"
+        )
+        self.database_path = Path(
+            os.getenv("DATABASE_PATH", "./data/transcriptions.db")
+        )
         self.audio_storage_path = Path(os.getenv("AUDIO_STORAGE_PATH", "./data/audio/"))
         self.audio_retention_days = int(os.getenv("AUDIO_RETENTION_DAYS", "30"))
 
         # === VISUALIZAÇÃO ===
-        self.enable_visualization = os.getenv("ENABLE_VISUALIZATION", "true").lower() == "true"
+        self.enable_visualization = (
+            os.getenv("ENABLE_VISUALIZATION", "true").lower() == "true"
+        )
         self.visualization_mode = os.getenv("VISUALIZATION_MODE", "gui")
         self.visualization_fps = int(os.getenv("VISUALIZATION_FPS", "30"))
 
@@ -184,49 +191,41 @@ class Settings:
             print(f" Erro ao salvar configurações: {e}")
             return False
 
-
     def get_all(self) -> Dict[str, Any]:
         """Retorna todas as configurações como dicionário."""
         return {
             # Modelo
             "transcription_model": self.transcription_model,
             "whisper_model_size": self.whisper_model_size,
-
             # Áudio
             "audio_sample_rate": self.audio_sample_rate,
             "audio_device_id": self.audio_device_id,
             "audio_channels": self.audio_channels,
             "audio_chunk_size": self.audio_chunk_size,
-
             # VAD
             "vad_silence_duration": self.vad_silence_duration,
             "vad_energy_threshold": self.vad_energy_threshold,
             "vad_strategy": self.vad_strategy,
-
             # Performance
             "use_gpu": self.use_gpu,
             "gpu_device": self.gpu_device,
             "latency_mode": self.latency_mode,
             "whisper_compute_type": self.whisper_compute_type,
-
             # Storage
             "save_audio": self.save_audio,
             "save_transcriptions": self.save_transcriptions,
             "database_path": str(self.database_path),
             "audio_storage_path": str(self.audio_storage_path),
             "audio_retention_days": self.audio_retention_days,
-
             # Visualização
             "enable_visualization": self.enable_visualization,
             "visualization_mode": self.visualization_mode,
             "visualization_fps": self.visualization_fps,
-
             # Logging
             "log_level": self.log_level,
             "log_file": str(self.log_file),
             "log_max_size_mb": self.log_max_size_mb,
             "log_backup_count": self.log_backup_count,
-
             # Advanced
             "audio_buffer_duration": self.audio_buffer_duration,
             "processing_timeout": self.processing_timeout,
@@ -236,34 +235,38 @@ class Settings:
         """Retorna resumo das configurações como string."""
         lines = []
         lines.append("=" * 60)
-        lines.append(f"CONFIGURAÇÕES DO SISTEMA DE TRANSCRIÇÃO")
+        lines.append("CONFIGURAÇÕES DO SISTEMA DE TRANSCRIÇÃO")
         lines.append("=" * 60)
 
-        lines.append(f"\nMODELO:")
+        lines.append("\nMODELO:")
         lines.append(f"  • Tipo: {self.transcription_model}")
         if self.transcription_model == "whisper":
             lines.append(f"  • Tamanho: {self.whisper_model_size}")
 
-        lines.append(f"\nÁUDIO:")
+        lines.append("\nÁUDIO:")
         lines.append(f"  • Sample Rate: {self.audio_sample_rate} Hz")
         lines.append(f"  • Device ID: {self.audio_device_id}")
         lines.append(f"  • Canais: {self.audio_channels}")
 
-        lines.append(f"\nVAD:")
+        lines.append("\nVAD:")
         lines.append(f"  • Silêncio: {self.vad_silence_duration}s")
         lines.append(f"  • Threshold: {self.vad_energy_threshold}")
         lines.append(f"  • Estratégia: {self.vad_strategy}")
 
-        lines.append(f"\nPERFORMANCE:")
+        lines.append("\nPERFORMANCE:")
         lines.append(f"  • GPU: {'Ativada' if self.use_gpu else 'Desativada'}")
         lines.append(f"  • Latência: {self.latency_mode}")
 
-        lines.append(f"\nARMAZENAMENTO:")
+        lines.append("\nARMAZENAMENTO:")
         lines.append(f"  • Salvar áudio: {'Sim' if self.save_audio else 'Não'}")
-        lines.append(f"  • Salvar transcrições: {'Sim' if self.save_transcriptions else 'Não'}")
+        lines.append(
+            f"  • Salvar transcrições: {'Sim' if self.save_transcriptions else 'Não'}"
+        )
 
-        lines.append(f"\nVISUALIZAÇÃO:")
-        lines.append(f"  • Status: {'Ativada' if self.enable_visualization else 'Desativada'}")
+        lines.append("\nVISUALIZAÇÃO:")
+        lines.append(
+            f"  • Status: {'Ativada' if self.enable_visualization else 'Desativada'}"
+        )
         lines.append(f"  • Modo: {self.visualization_mode}")
 
         lines.append("=" * 60 + "\n")

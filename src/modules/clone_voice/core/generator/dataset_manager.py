@@ -6,7 +6,7 @@ import logging
 import asyncio
 from pathlib import Path
 from datetime import datetime
-from typing import Optional, Callable, List, Dict, Any
+from typing import Optional, Callable, List
 from dataclasses import dataclass, field, asdict
 from concurrent.futures import ThreadPoolExecutor
 
@@ -58,7 +58,6 @@ class DatasetEntry:
 
 
 class DatasetManager:
-
     def __init__(self, config: DatasetConfig, api_key: Optional[str] = None):
         self.config = config
         self.api_key = api_key
@@ -78,7 +77,9 @@ class DatasetManager:
         self.on_phrase_generated: Optional[Callable[[int, str, Path], None]] = None
 
     def initialize(self) -> bool:
-        logger.info(f"Inicializando DatasetManager: voice={self.config.voice_id}, model={self.config.model_id}")
+        logger.info(
+            f"Inicializando DatasetManager: voice={self.config.voice_id}, model={self.config.model_id}"
+        )
 
         self.client = ElevenLabsClient(
             api_key=self.api_key,
@@ -182,23 +183,29 @@ class DatasetManager:
         if self.on_complete:
             self.on_complete(self.stats)
 
-        logger.info(f"Dataset gerado: {self.stats.total_generated}/{self.stats.total_requested}")
+        logger.info(
+            f"Dataset gerado: {self.stats.total_generated}/{self.stats.total_requested}"
+        )
         logger.info(f"Diretorio: {dataset_dir}")
 
         return self.stats
 
-    def _generate_single_with_retry(self, index: int, phrase: str, dataset_dir: Path, max_retries: int = 3) -> GenerationResult:
+    def _generate_single_with_retry(
+        self, index: int, phrase: str, dataset_dir: Path, max_retries: int = 3
+    ) -> GenerationResult:
         audio_path = dataset_dir / "wavs" / f"{index:04d}.mp3"
         transcript_path = dataset_dir / "transcripts" / f"{index:04d}.txt"
 
         for attempt in range(max_retries):
             if self._should_stop:
-                return GenerationResult(success=False, phrase=phrase, error="Interrompido")
+                return GenerationResult(
+                    success=False, phrase=phrase, error="Interrompido"
+                )
 
             result = self.client.generate_audio(phrase, audio_path)
 
             if result.success:
-                transcript_path.write_text(phrase, encoding='utf-8')
+                transcript_path.write_text(phrase, encoding="utf-8")
                 return result
 
             if "429" in str(result.error) or "rate" in str(result.error).lower():
@@ -217,14 +224,16 @@ class DatasetManager:
 
         return result
 
-    def _generate_single(self, index: int, phrase: str, dataset_dir: Path) -> GenerationResult:
+    def _generate_single(
+        self, index: int, phrase: str, dataset_dir: Path
+    ) -> GenerationResult:
         audio_path = dataset_dir / "wavs" / f"{index:04d}.mp3"
         transcript_path = dataset_dir / "transcripts" / f"{index:04d}.txt"
 
         result = self.client.generate_audio(phrase, audio_path)
 
         if result.success:
-            transcript_path.write_text(phrase, encoding='utf-8')
+            transcript_path.write_text(phrase, encoding="utf-8")
 
         return result
 
@@ -245,17 +254,17 @@ class DatasetManager:
         }
 
         metadata_path = dataset_dir / "metadata.json"
-        with open(metadata_path, 'w', encoding='utf-8') as f:
+        with open(metadata_path, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Metadata salvo: {metadata_path}")
 
     def _save_training_files(self, dataset_dir: Path) -> None:
         ljspeech_path = dataset_dir / "metadata.csv"
-        with open(ljspeech_path, 'w', encoding='utf-8') as f:
+        with open(ljspeech_path, "w", encoding="utf-8") as f:
             for entry in self.entries:
-                audio_name = entry.audio_file.replace('.mp3', '').replace('.wav', '')
-                phrase_clean = entry.phrase.replace('|', ' ').replace('\n', ' ')
+                audio_name = entry.audio_file.replace(".mp3", "").replace(".wav", "")
+                phrase_clean = entry.phrase.replace("|", " ").replace("\n", " ")
                 f.write(f"{audio_name}|{phrase_clean}|{phrase_clean}\n")
 
         logger.info(f"LJSpeech metadata: {ljspeech_path}")
@@ -263,24 +272,29 @@ class DatasetManager:
         coqui_path = dataset_dir / "coqui_manifest.json"
         coqui_entries = []
         for entry in self.entries:
-            coqui_entries.append({
-                "audio_file": f"wavs/{entry.audio_file}",
-                "text": entry.phrase,
-                "speaker_name": self.config.name,
-            })
+            coqui_entries.append(
+                {
+                    "audio_file": f"wavs/{entry.audio_file}",
+                    "text": entry.phrase,
+                    "speaker_name": self.config.name,
+                }
+            )
 
-        with open(coqui_path, 'w', encoding='utf-8') as f:
+        with open(coqui_path, "w", encoding="utf-8") as f:
             json.dump(coqui_entries, f, indent=2, ensure_ascii=False)
 
         logger.info(f"Coqui manifest: {coqui_path}")
 
         chatterbox_path = dataset_dir / "chatterbox_data.jsonl"
-        with open(chatterbox_path, 'w', encoding='utf-8') as f:
+        with open(chatterbox_path, "w", encoding="utf-8") as f:
             for entry in self.entries:
-                line = json.dumps({
-                    "audio_path": f"wavs/{entry.audio_file}",
-                    "text": entry.phrase,
-                }, ensure_ascii=False)
+                line = json.dumps(
+                    {
+                        "audio_path": f"wavs/{entry.audio_file}",
+                        "text": entry.phrase,
+                    },
+                    ensure_ascii=False,
+                )
                 f.write(line + "\n")
 
         logger.info(f"Chatterbox data: {chatterbox_path}")
@@ -288,7 +302,7 @@ class DatasetManager:
         readme_content = f"""# Dataset: {self.config.name}
 
 ## Info
-- Gerado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+- Gerado em: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 - Voice ID: {self.config.voice_id}
 - Modelo: {self.config.model_id}
 - Total de amostras: {self.stats.total_generated}
@@ -325,7 +339,7 @@ audio = model.generate("Teste")
 - Speaker Boost: {self.config.use_speaker_boost}
 """
         readme_path = dataset_dir / "README.md"
-        readme_path.write_text(readme_content, encoding='utf-8')
+        readme_path.write_text(readme_content, encoding="utf-8")
 
     def stop(self) -> None:
         self._should_stop = True
@@ -340,7 +354,6 @@ audio = model.generate("Teste")
 
 
 class AsyncDatasetManager(DatasetManager):
-
     async def generate_dataset_async(self) -> DatasetStats:
         loop = asyncio.get_event_loop()
         with ThreadPoolExecutor() as pool:

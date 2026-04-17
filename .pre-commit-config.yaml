@@ -1,0 +1,40 @@
+fail_fast: false
+repos:
+  - repo: local
+    hooks:
+      - id: check-anonymity
+        name: "[01] Identity Guard"
+        language: system
+        entry: python3 scripts/hooks/check_anonymity.py
+        pass_filenames: true
+        types: [text]
+
+      - id: remove-coauthor
+        language: system
+        entry: bash scripts/hooks/remove_coauthor.sh
+        pass_filenames: false
+        stages: [commit-msg]
+        always_run: true
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.13
+    hooks:
+      - id: ruff
+        name: "[03] Ruff lint (erros criticos)"
+        args: [ --fix, --exit-non-zero-on-fix, --select, "E9,F63,F7,F82" ]
+      - id: ruff-format
+        name: "[04] Ruff format (auto-fix)"
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: "[05] Trailing whitespace"
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-added-large-files
+        args: ['--maxkb=1000']
+        exclude: '^data_output/.*\.(wav|mp3|flac|gz|tar)$'
+      - id: check-merge-conflict
+      - id: detect-private-key

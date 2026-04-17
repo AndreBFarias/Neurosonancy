@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Callable, Optional
 
@@ -9,7 +9,8 @@ logger = logging.getLogger(__name__)
 
 try:
     from dbus_next.aio import MessageBus  # type: ignore
-    from dbus_next import BusType, Variant  # type: ignore
+    from dbus_next import BusType, Variant  # type: ignore  # noqa: F401
+
     DBUS_AVAILABLE = True
 except ImportError:
     DBUS_AVAILABLE = False
@@ -66,8 +67,12 @@ class MPRISBridge:
             target = player_bus_name if player_bus_name in players else players[0]
             self._player_name = target.replace(self.MPRIS_PREFIX, "")
 
-            introspection = await self._bus.introspect(target, "/org/mpris/MediaPlayer2")
-            obj = self._bus.get_proxy_object(target, "/org/mpris/MediaPlayer2", introspection)
+            introspection = await self._bus.introspect(
+                target, "/org/mpris/MediaPlayer2"
+            )
+            obj = self._bus.get_proxy_object(
+                target, "/org/mpris/MediaPlayer2", introspection
+            )
             self._player_proxy = obj.get_interface("org.mpris.MediaPlayer2.Player")
 
             await self._try_tracklist(obj)
@@ -93,7 +98,11 @@ class MPRISBridge:
             metadata = await self._player_proxy.get_metadata()
             title = _extract_variant(metadata, "xesam:title", "")
             artist_raw = _extract_variant(metadata, "xesam:artist", [])
-            artist = ", ".join(artist_raw) if isinstance(artist_raw, list) else str(artist_raw)
+            artist = (
+                ", ".join(artist_raw)
+                if isinstance(artist_raw, list)
+                else str(artist_raw)
+            )
             album = _extract_variant(metadata, "xesam:album", "")
             duration = int(_extract_variant(metadata, "mpris:length", 0))
 
@@ -164,18 +173,24 @@ class MPRISBridge:
             return []
         try:
             bus_name = self.MPRIS_PREFIX + self._player_name
-            introspection = await self._bus.introspect(bus_name, "/org/mpris/MediaPlayer2")
-            obj = self._bus.get_proxy_object(bus_name, "/org/mpris/MediaPlayer2", introspection)
+            introspection = await self._bus.introspect(
+                bus_name, "/org/mpris/MediaPlayer2"
+            )
+            obj = self._bus.get_proxy_object(
+                bus_name, "/org/mpris/MediaPlayer2", introspection
+            )
             iface = obj.get_interface("org.mpris.MediaPlayer2.TrackList")
             tracks_raw = await iface.call_get_tracks_metadata([])
             result: list[TrackInfo] = []
             for m in tracks_raw[:20]:
-                result.append(TrackInfo(
-                    title=_extract_variant(m, "xesam:title", ""),
-                    artist=", ".join(_extract_variant(m, "xesam:artist", [])),
-                    album=_extract_variant(m, "xesam:album", ""),
-                    player_name=self._player_name,
-                ))
+                result.append(
+                    TrackInfo(
+                        title=_extract_variant(m, "xesam:title", ""),
+                        artist=", ".join(_extract_variant(m, "xesam:artist", [])),
+                        album=_extract_variant(m, "xesam:album", ""),
+                        player_name=self._player_name,
+                    )
+                )
             return result
         except Exception as e:
             logger.debug("Erro ao obter fila: %s", e)

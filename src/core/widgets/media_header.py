@@ -16,7 +16,9 @@ def _get_system_volume() -> float:
     try:
         out = subprocess.run(
             ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
-            capture_output=True, text=True, timeout=2
+            capture_output=True,
+            text=True,
+            timeout=2,
         ).stdout
         m = re.search(r"(\d+)%", out)
         return int(m.group(1)) / 100 if m else 0.8
@@ -29,14 +31,14 @@ def _set_system_volume(volume: float) -> None:
     try:
         subprocess.run(
             ["pactl", "set-sink-volume", "@DEFAULT_SINK@", f"{pct}%"],
-            capture_output=True, timeout=2
+            capture_output=True,
+            timeout=2,
         )
     except Exception:
         pass
 
 
 class MediaHeader(Widget):
-
     track_title: reactive[str] = reactive("-- Sem player --")
     track_artist: reactive[str] = reactive("")
     is_playing: reactive[bool] = reactive(False)
@@ -72,9 +74,9 @@ class MediaHeader(Widget):
     DEFAULT_CSS = f"""
     MediaHeader {{
         height: 7;
-        background: {COLORS['bg_surface']};
-        border: solid {COLORS['border_normal']};
-        border-title-color: {COLORS['accent_tertiary']};
+        background: {COLORS["bg_surface"]};
+        border: solid {COLORS["border_normal"]};
+        border-title-color: {COLORS["accent_tertiary"]};
         border-title-style: bold;
         dock: top;
         layout: horizontal;
@@ -87,7 +89,7 @@ class MediaHeader(Widget):
         height: 100%;
         content-align: left middle;
         padding: 0 2;
-        color: {COLORS['text_primary']};
+        color: {COLORS["text_primary"]};
     }}
 
     MediaHeader #controls {{
@@ -101,15 +103,15 @@ class MediaHeader(Widget):
         min-width: 5;
         height: 3;
         margin: 0 1;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['border_normal']};
-        color: {COLORS['text_primary']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["border_normal"]};
+        color: {COLORS["text_primary"]};
     }}
 
     MediaHeader #controls Button:hover {{
-        background: {COLORS['accent_primary']};
-        color: {COLORS['bg_darkest']};
-        border: solid {COLORS['accent_primary']};
+        background: {COLORS["accent_primary"]};
+        color: {COLORS["bg_darkest"]};
+        border: solid {COLORS["accent_primary"]};
     }}
 
     MediaHeader #model-select {{
@@ -125,17 +127,17 @@ class MediaHeader(Widget):
     }}
 
     MediaHeader #track-progress > .bar--bar {{
-        color: {COLORS['border_normal']};
+        color: {COLORS["border_normal"]};
     }}
 
     MediaHeader #track-progress > .bar--complete {{
-        color: {COLORS['neon_cyan']};
+        color: {COLORS["neon_cyan"]};
     }}
 
     MediaHeader #vol-label {{
         width: 4;
         height: 1;
-        color: {COLORS['text_muted']};
+        color: {COLORS["text_muted"]};
         margin: 0 0;
         content-align: right middle;
     }}
@@ -147,16 +149,17 @@ class MediaHeader(Widget):
     }}
 
     MediaHeader #vol-bar > .bar--bar {{
-        color: {COLORS['border_normal']};
+        color: {COLORS["border_normal"]};
     }}
 
     MediaHeader #vol-bar > .bar--complete {{
-        color: {COLORS['accent_primary']};
+        color: {COLORS["accent_primary"]};
     }}
     """
 
     def compose(self) -> ComposeResult:
         from textual.containers import Horizontal
+
         yield Static("", id="track-info")
         with Horizontal(id="controls"):
             yield Button("|<", id="btn-prev", tooltip="Anterior")
@@ -181,6 +184,7 @@ class MediaHeader(Widget):
     def _populate_models(self) -> None:
         try:
             from src.core.model_manager import ModelManager
+
             names = ModelManager().get_display_names()
             sel = self.query_one("#model-select", Select)
             sel.set_options([(name, name) for name in names])

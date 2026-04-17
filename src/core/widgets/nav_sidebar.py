@@ -24,7 +24,6 @@ _NAV_ITEMS: list[NavItem] = [
 
 
 class NavSidebar(Widget):
-
     class ModuleSelected(Message):
         def __init__(self, module_id: str) -> None:
             super().__init__()
@@ -41,17 +40,17 @@ class NavSidebar(Widget):
         width: 22;
         min-width: 16;
         height: 100%;
-        background: {COLORS['bg_surface']};
-        border-right: solid {COLORS['border_normal']};
+        background: {COLORS["bg_surface"]};
+        border-right: solid {COLORS["border_normal"]};
     }}
 
     NavSidebar #sidebar-title {{
         text-align: center;
-        color: {COLORS['accent_tertiary']};
+        color: {COLORS["accent_tertiary"]};
         text-style: bold;
         padding: 1;
-        background: {COLORS['bg_elevated']};
-        border-bottom: solid {COLORS['border_normal']};
+        background: {COLORS["bg_elevated"]};
+        border-bottom: solid {COLORS["border_normal"]};
     }}
 
     NavSidebar ListView {{
@@ -62,28 +61,28 @@ class NavSidebar(Widget):
 
     NavSidebar ListItem {{
         padding: 0 1;
-        color: {COLORS['text_secondary']};
+        color: {COLORS["text_secondary"]};
     }}
 
     NavSidebar ListItem:hover {{
-        background: {COLORS['bg_hover']};
-        color: {COLORS['text_primary']};
+        background: {COLORS["bg_hover"]};
+        color: {COLORS["text_primary"]};
     }}
 
     NavSidebar ListItem.active {{
-        color: {COLORS['accent_primary']};
+        color: {COLORS["accent_primary"]};
         text-style: bold;
-        background: {COLORS['bg_elevated']};
-        border-left: thick {COLORS['accent_primary']};
+        background: {COLORS["bg_elevated"]};
+        border-left: thick {COLORS["accent_primary"]};
         padding-left: 1;
     }}
 
     NavSidebar #sidebar-footer {{
         text-align: center;
-        color: {COLORS['text_muted']};
+        color: {COLORS["text_muted"]};
         padding: 1;
-        background: {COLORS['bg_elevated']};
-        border-top: solid {COLORS['border_normal']};
+        background: {COLORS["bg_elevated"]};
+        border-top: solid {COLORS["border_normal"]};
         dock: bottom;
     }}
     """

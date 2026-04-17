@@ -1,12 +1,9 @@
 # -*- coding: utf-8 -*-
 
-import os
 import logging
-import subprocess
 from pathlib import Path
 from typing import Optional, Callable, List, Dict, Any
 from dataclasses import dataclass, field
-from datetime import datetime
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -42,7 +39,7 @@ class TrainingStats:
     total_steps: int = 0
     current_step: int = 0
     loss: float = 0.0
-    best_loss: float = float('inf')
+    best_loss: float = float("inf")
     output_path: Optional[Path] = None
     checkpoints: List[Path] = field(default_factory=list)
     is_completed: bool = False
@@ -50,7 +47,6 @@ class TrainingStats:
 
 
 class TrainerBase(ABC):
-
     VENV_PATH: Optional[Path] = None
 
     def __init__(self, config: TrainingConfig):

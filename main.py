@@ -14,13 +14,11 @@ LOGS_DIR = ROOT_DIR / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
 
 handler = RotatingFileHandler(
-    LOGS_DIR / "neurosonancy.log",
-    maxBytes=5_000_000,
-    backupCount=3
+    LOGS_DIR / "neurosonancy.log", maxBytes=5_000_000, backupCount=3
 )
-handler.setFormatter(logging.Formatter(
-    "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-))
+handler.setFormatter(
+    logging.Formatter("%(asctime)s | %(levelname)s | %(name)s | %(message)s")
+)
 logging.basicConfig(level=logging.INFO, handlers=[handler])
 logger = logging.getLogger("neurosonancy")
 
@@ -28,6 +26,7 @@ logger = logging.getLogger("neurosonancy")
 def main() -> None:
     logger.info("Neurosonancy iniciado")
     from src.unified_app import NeurosonancyUnifiedApp
+
     NeurosonancyUnifiedApp().run()
     logger.info("Neurosonancy encerrado")
 

@@ -9,7 +9,9 @@ from typing import Dict, Any, Optional
 
 logger = logging.getLogger(__name__)
 
-_LUNA_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', '..', 'Luna'))
+_LUNA_PATH = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "Luna")
+)
 if _LUNA_PATH not in sys.path:
     sys.path.insert(0, _LUNA_PATH)
 
@@ -17,10 +19,11 @@ try:
     from src.luna.metricas import (
         get_latency_tracker,
         get_api_tracker,
-        get_queue_metrics,
-        get_metrics
+        get_queue_metrics,  # noqa: F401
+        get_metrics,
     )
-    from src.luna.threading_manager import LunaThreadingManager, ProcessingRequest
+    from src.luna.threading_manager import LunaThreadingManager, ProcessingRequest  # noqa: F401
+
     LUNA_AVAILABLE = True
     logger.info("Luna modules imported successfully")
 except ImportError as e:
@@ -29,7 +32,6 @@ except ImportError as e:
 
 
 class SimulatedData:
-
     def __init__(self):
         self._start_time = time.time()
         self._request_count = 0
@@ -107,7 +109,6 @@ class SimulatedData:
 
 
 class LunaBridge:
-
     def __init__(self, threading_manager: Optional[Any] = None):
         self._threading_manager = threading_manager
         self._simulator = SimulatedData()
@@ -127,7 +128,9 @@ class LunaBridge:
             return {
                 "stt": stats.get("stt", {"avg": 0, "p95": 0, "max": 0}),
                 "llm": stats.get("llm", {"avg": 0, "p95": 0, "max": 0}),
-                "tts_generate": stats.get("tts_generate", {"avg": 0, "p95": 0, "max": 0}),
+                "tts_generate": stats.get(
+                    "tts_generate", {"avg": 0, "p95": 0, "max": 0}
+                ),
             }
         except Exception as e:
             logger.error(f"Error fetching latencies: {e}")
@@ -185,10 +188,7 @@ class LunaBridge:
             return False, "Luna not connected (standalone mode)"
 
         try:
-            request = ProcessingRequest(
-                user_text=command,
-                timestamp=time.time()
-            )
+            request = ProcessingRequest(user_text=command, timestamp=time.time())
             self._threading_manager.processing_queue.put(request)
             return True, f"Command queued: {command[:50]}..."
         except Exception as e:

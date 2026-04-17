@@ -23,6 +23,7 @@ _MPV_SOCK = "/tmp/mpv-neuro.sock"
 
 try:
     import psutil  # type: ignore
+
     _PSUTIL_AVAILABLE = True
 except ImportError:
     _PSUTIL_AVAILABLE = False
@@ -33,7 +34,9 @@ def _pactl_get_volume() -> int:
     try:
         out = subprocess.run(
             ["pactl", "get-sink-volume", "@DEFAULT_SINK@"],
-            capture_output=True, text=True, timeout=2
+            capture_output=True,
+            text=True,
+            timeout=2,
         ).stdout
         m = re.search(r"(\d+)%", out)
         return int(m.group(1)) if m else 80
@@ -47,28 +50,27 @@ def _bar(value: float, width: int = 10) -> str:
 
 
 class NowPlayingWidget(Widget):
-
     DEFAULT_CSS = f"""
     NowPlayingWidget {{
         height: 11;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['neon_cyan']};
-        border-title-color: {COLORS['neon_cyan']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["neon_cyan"]};
+        border-title-color: {COLORS["neon_cyan"]};
         padding: 1 2;
     }}
 
     NowPlayingWidget .np-info {{
-        color: {COLORS['text_primary']};
+        color: {COLORS["text_primary"]};
         height: 1;
     }}
 
     NowPlayingWidget .np-meta {{
-        color: {COLORS['text_muted']};
+        color: {COLORS["text_muted"]};
         height: 1;
     }}
 
     NowPlayingWidget .np-progress {{
-        color: {COLORS['neon_cyan']};
+        color: {COLORS["neon_cyan"]};
         height: 1;
     }}
 
@@ -82,19 +84,19 @@ class NowPlayingWidget(Widget):
         min-width: 6;
         height: 3;
         margin: 0 1 0 0;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['border_normal']};
-        color: {COLORS['text_primary']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["border_normal"]};
+        color: {COLORS["text_primary"]};
     }}
 
     NowPlayingWidget #np-controls Button:hover {{
-        background: {COLORS['accent_primary']};
-        color: {COLORS['bg_darkest']};
-        border: solid {COLORS['accent_primary']};
+        background: {COLORS["accent_primary"]};
+        color: {COLORS["bg_darkest"]};
+        border: solid {COLORS["accent_primary"]};
     }}
 
     NowPlayingWidget #np-vol-label {{
-        color: {COLORS['text_muted']};
+        color: {COLORS["text_muted"]};
         width: auto;
         min-width: 18;
         content-align: left middle;
@@ -111,7 +113,11 @@ class NowPlayingWidget(Widget):
 
     def compose(self) -> ComposeResult:
         self.border_title = "TOCANDO AGORA"
-        yield Static("Nenhum player ativo — abra Spotify ou outro player MPRIS", id="np-title", classes="np-info")
+        yield Static(
+            "Nenhum player ativo — abra Spotify ou outro player MPRIS",
+            id="np-title",
+            classes="np-info",
+        )
         yield Static("", id="np-artist", classes="np-meta")
         yield Static("", id="np-progress", classes="np-progress")
         with Horizontal(id="np-controls"):
@@ -151,7 +157,7 @@ class NowPlayingWidget(Widget):
             self._track = track
 
             status = await self._mpris.get_playback_status()
-            self._is_playing = (status == PlaybackState.PLAYING)
+            self._is_playing = status == PlaybackState.PLAYING
             try:
                 btn = self.query_one("#np-playpause", Button)
                 btn.label = "||" if self._is_playing else " >"
@@ -161,7 +167,8 @@ class NowPlayingWidget(Widget):
             if track.title:
                 player_tag = (
                     f"[{COLORS['accent_primary']}][{track.player_name.upper()}][/]  "
-                    if track.player_name else ""
+                    if track.player_name
+                    else ""
                 )
                 self.query_one("#np-title", Static).update(
                     f"{player_tag}[bold {COLORS['text_primary']}]{track.title}[/]"
@@ -182,7 +189,7 @@ class NowPlayingWidget(Widget):
                 bar = _bar(progress, 22)
                 self.query_one("#np-progress", Static).update(
                     f"[{COLORS['neon_cyan']}]{bar}[/] "
-                    f"[{COLORS['text_muted']}]{pos_s//60}:{pos_s%60:02d} / {dur_s//60}:{dur_s%60:02d}[/]"
+                    f"[{COLORS['text_muted']}]{pos_s // 60}:{pos_s % 60:02d} / {dur_s // 60}:{dur_s % 60:02d}[/]"
                 )
             else:
                 self.query_one("#np-progress", Static).update("")
@@ -201,13 +208,12 @@ class NowPlayingWidget(Widget):
 
 
 class YouTubePlayerWidget(Widget):
-
     DEFAULT_CSS = f"""
     YouTubePlayerWidget {{
         height: 11;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['accent_secondary']};
-        border-title-color: {COLORS['accent_secondary']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["accent_secondary"]};
+        border-title-color: {COLORS["accent_secondary"]};
         padding: 1 2;
     }}
 
@@ -219,46 +225,46 @@ class YouTubePlayerWidget(Widget):
     YouTubePlayerWidget #yt-url {{
         width: 1fr;
         height: 3;
-        background: {COLORS['bg_dark']};
-        border: solid {COLORS['border_normal']};
-        color: {COLORS['text_primary']};
+        background: {COLORS["bg_dark"]};
+        border: solid {COLORS["border_normal"]};
+        color: {COLORS["text_primary"]};
         margin-right: 1;
     }}
 
     YouTubePlayerWidget #yt-url:focus {{
-        border: solid {COLORS['accent_primary']};
+        border: solid {COLORS["accent_primary"]};
     }}
 
     YouTubePlayerWidget #yt-play {{
         width: 10;
         height: 3;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['accent_secondary']};
-        color: {COLORS['accent_secondary']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["accent_secondary"]};
+        color: {COLORS["accent_secondary"]};
     }}
 
     YouTubePlayerWidget #yt-play:hover {{
-        background: {COLORS['accent_secondary']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["accent_secondary"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     YouTubePlayerWidget #yt-stop {{
         width: 8;
         height: 3;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['neon_pink']};
-        color: {COLORS['neon_pink']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["neon_pink"]};
+        color: {COLORS["neon_pink"]};
         margin-left: 1;
     }}
 
     YouTubePlayerWidget #yt-stop:hover {{
-        background: {COLORS['neon_pink']};
-        color: {COLORS['bg_darkest']};
+        background: {COLORS["neon_pink"]};
+        color: {COLORS["bg_darkest"]};
     }}
 
     YouTubePlayerWidget #yt-log {{
         height: 4;
-        background: {COLORS['bg_dark']};
+        background: {COLORS["bg_dark"]};
         border: none;
     }}
     """
@@ -316,7 +322,9 @@ class YouTubePlayerWidget(Widget):
             )
             self._log(f"[{COLORS['success']}]mpv PID {self._mpv_proc.pid} — tocando[/]")
         except FileNotFoundError:
-            self._log(f"[{COLORS['error']}]mpv nao encontrado — instale: sudo apt install mpv[/]")
+            self._log(
+                f"[{COLORS['error']}]mpv nao encontrado — instale: sudo apt install mpv[/]"
+            )
         except Exception as e:
             self._log(f"[{COLORS['error']}]Erro: {e}[/]")
 
@@ -332,13 +340,12 @@ class YouTubePlayerWidget(Widget):
 
 
 class SystemInfoWidget(Widget):
-
     DEFAULT_CSS = f"""
     SystemInfoWidget {{
         height: 5;
-        background: {COLORS['bg_elevated']};
-        border: solid {COLORS['success']};
-        border-title-color: {COLORS['success']};
+        background: {COLORS["bg_elevated"]};
+        border: solid {COLORS["success"]};
+        border-title-color: {COLORS["success"]};
         padding: 0 2;
     }}
 
@@ -350,7 +357,7 @@ class SystemInfoWidget(Widget):
     SystemInfoWidget .sys-stat {{
         width: 1fr;
         height: 1;
-        color: {COLORS['text_primary']};
+        color: {COLORS["text_primary"]};
     }}
     """
 
@@ -374,20 +381,26 @@ class SystemInfoWidget(Widget):
                 ram_used = mem.used / 1024**3
                 ram_total = mem.total / 1024**3
                 self.query_one("#sys-cpu", Static).update(
-                    f"[{COLORS['text_muted']}]CPU[/] [{COLORS['accent_primary']}]{_bar(cpu/100, 6)}[/] "
+                    f"[{COLORS['text_muted']}]CPU[/] [{COLORS['accent_primary']}]{_bar(cpu / 100, 6)}[/] "
                     f"[{COLORS['text_muted']}]{cpu:.0f}%[/]"
                 )
                 self.query_one("#sys-ram", Static).update(
-                    f"[{COLORS['text_muted']}]RAM[/] [{COLORS['accent_primary']}]{_bar(mem.percent/100, 6)}[/] "
+                    f"[{COLORS['text_muted']}]RAM[/] [{COLORS['accent_primary']}]{_bar(mem.percent / 100, 6)}[/] "
                     f"[{COLORS['text_muted']}]{ram_used:.1f}/{ram_total:.1f}GB[/]"
                 )
             else:
-                self.query_one("#sys-cpu", Static).update(f"[{COLORS['text_muted']}]CPU (psutil ausente)[/]")
-                self.query_one("#sys-ram", Static).update(f"[{COLORS['text_muted']}]RAM (psutil ausente)[/]")
+                self.query_one("#sys-cpu", Static).update(
+                    f"[{COLORS['text_muted']}]CPU (psutil ausente)[/]"
+                )
+                self.query_one("#sys-ram", Static).update(
+                    f"[{COLORS['text_muted']}]RAM (psutil ausente)[/]"
+                )
 
             datasets_dir = _PROJECT_ROOT / "outputs" / "datasets"
             models_dir = _PROJECT_ROOT / "outputs" / "models"
-            n_datasets = len(list(datasets_dir.glob("*"))) if datasets_dir.exists() else 0
+            n_datasets = (
+                len(list(datasets_dir.glob("*"))) if datasets_dir.exists() else 0
+            )
             n_models = len(list(models_dir.glob("*"))) if models_dir.exists() else 0
 
             self.query_one("#sys-datasets", Static).update(
@@ -401,26 +414,25 @@ class SystemInfoWidget(Widget):
 
 
 class AsciiControlPanel(Widget):
-
-    DEFAULT_CSS = f"""
-    AsciiControlPanel {{
+    DEFAULT_CSS = """
+    AsciiControlPanel {
         height: 100%;
         width: 100%;
-    }}
+    }
 
-    AsciiControlPanel #media-layout {{
+    AsciiControlPanel #media-layout {
         height: 100%;
         padding: 1;
         scrollbar-gutter: stable;
-    }}
+    }
 
-    AsciiControlPanel NowPlayingWidget {{
+    AsciiControlPanel NowPlayingWidget {
         margin-bottom: 1;
-    }}
+    }
 
-    AsciiControlPanel YouTubePlayerWidget {{
+    AsciiControlPanel YouTubePlayerWidget {
         margin-bottom: 1;
-    }}
+    }
     """
 
     BINDINGS = [
@@ -438,7 +450,9 @@ class AsciiControlPanel(Widget):
             yield SystemInfoWidget(id="system-info")
 
     def on_mount(self) -> None:
-        self.run_worker(self._connect_mpris, exclusive=False, name="media-mpris-connect")
+        self.run_worker(
+            self._connect_mpris, exclusive=False, name="media-mpris-connect"
+        )
 
     async def _connect_mpris(self) -> None:
         connected = await self._mpris.connect()

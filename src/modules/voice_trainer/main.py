@@ -11,8 +11,15 @@ from datetime import datetime
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.widgets import (
-    Header, Footer, Button, Label, Input,
-    Static, ProgressBar, Switch, RadioSet, RadioButton
+    Header,
+    Footer,
+    Button,
+    Label,
+    Input,
+    Static,
+    ProgressBar,
+    RadioSet,
+    RadioButton,
 )
 from textual.containers import Vertical, Horizontal, Container
 from textual.reactive import reactive
@@ -53,7 +60,11 @@ class SampleCounter(Static):
     required = reactive(config.TRAINING_CONFIG["TARGET_SAMPLES"])
 
     def render(self) -> str:
-        color = COLORS['success'] if self.recorded >= config.TRAINING_CONFIG["MIN_SAMPLES"] else COLORS['warning']
+        color = (
+            COLORS["success"]
+            if self.recorded >= config.TRAINING_CONFIG["MIN_SAMPLES"]
+            else COLORS["warning"]
+        )
         return f"[{color}]Amostras: [bold]{self.recorded}[/bold]/{self.required}[/]"
 
 
@@ -68,7 +79,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
         Binding("space", "toggle_recording", "Gravar", show=True),
     ]
 
-    CSS = CSS_COMMON + """
+    CSS = (
+        CSS_COMMON
+        + """
     #main-container {
         width: 100%;
         height: 100%;
@@ -234,6 +247,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
         color: #8b5cf6;
     }
     """
+    )
 
     recorded_samples: reactive[List[str]] = reactive(list)
     current_phrase_index: reactive[int] = reactive(-1)
@@ -260,16 +274,25 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                 yield AudioVisualizer(id="audio-visualizer")
 
                 with Vertical(id="progress-container"):
-                    yield ProgressBar(id="recording-progress", total=100, show_eta=False)
+                    yield ProgressBar(
+                        id="recording-progress", total=100, show_eta=False
+                    )
 
                 with Horizontal(id="main-buttons"):
                     yield Button("SORTEAR", id="btn-shuffle", variant="primary")
                     yield Button("GRAVAR", id="btn-record", variant="success")
                     yield Button("OUVIR", id="btn-play", disabled=True)
-                    yield Button("DESCARTAR", id="btn-discard", variant="warning", disabled=True)
+                    yield Button(
+                        "DESCARTAR", id="btn-discard", variant="warning", disabled=True
+                    )
 
                 with Vertical(id="save-button-container"):
-                    yield Button("SALVAR AMOSTRA", id="btn-save-sample", variant="primary", disabled=True)
+                    yield Button(
+                        "SALVAR AMOSTRA",
+                        id="btn-save-sample",
+                        variant="primary",
+                        disabled=True,
+                    )
 
                 with Vertical(id="samples-section"):
                     yield Label("Amostras Salvas", classes="section-title")
@@ -281,7 +304,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                 with Vertical(classes="setting-item"):
                     yield Label("Nivel de Dificuldade:", classes="setting-label")
                     with RadioSet(id="level-selector"):
-                        yield RadioButton("Baseline (40 frases)", id="level-baseline", value=True)
+                        yield RadioButton(
+                            "Baseline (40 frases)", id="level-baseline", value=True
+                        )
                         yield RadioButton("Facil (20 frases)", id="level-low")
                         yield RadioButton("Medio (40 frases)", id="level-medium")
                         yield RadioButton("Dificil (60 frases)", id="level-high")
@@ -291,7 +316,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                     yield Input(
                         placeholder="Ex: Voz_Andre_V1",
                         id="input-model-name",
-                        value=f"Voz_{datetime.now().strftime('%Y%m%d')}"
+                        value=f"Voz_{datetime.now().strftime('%Y%m%d')}",
                     )
 
                 with Vertical(classes="setting-item"):
@@ -300,7 +325,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                         placeholder="10",
                         id="input-target-samples",
                         value=str(config.TRAINING_CONFIG["TARGET_SAMPLES"]),
-                        type="integer"
+                        type="integer",
                     )
 
         yield Footer()
@@ -316,7 +341,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
             channels=config.AUDIO_CONFIG["CHANNELS"],
             device_id=config.AUDIO_CONFIG.get("DEVICE_ID"),
             vad_silence_duration=config.VAD_CONFIG["SILENCE_DURATION"],
-            vad_energy_threshold=config.VAD_CONFIG["ENERGY_THRESHOLD"]
+            vad_energy_threshold=config.VAD_CONFIG["ENERGY_THRESHOLD"],
         )
 
         visualizer = self.query_one("#audio-visualizer", AudioVisualizer)
@@ -326,7 +351,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
         self.audio_comparator = AudioComparator(
             whisper_model_size=config.WHISPER_CONFIG["MODEL_SIZE"],
             device=config.WHISPER_CONFIG["DEVICE"],
-            compute_type=config.WHISPER_CONFIG["COMPUTE_TYPE"]
+            compute_type=config.WHISPER_CONFIG["COMPUTE_TYPE"],
         )
 
     def _get_current_phrases(self) -> list:
@@ -342,8 +367,7 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
     def action_shuffle_phrase(self) -> None:
         phrases = self._get_current_phrases()
         available_indices = [
-            i for i in range(len(phrases))
-            if i != self.current_phrase_index
+            i for i in range(len(phrases)) if i != self.current_phrase_index
         ]
         if available_indices:
             self.current_phrase_index = random.choice(available_indices)
@@ -389,7 +413,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
 
         self._animate_progress()
 
-        self.notify("Gravando... pare de falar quando terminar.", severity="information")
+        self.notify(
+            "Gravando... pare de falar quando terminar.", severity="information"
+        )
 
     def _stop_recording(self) -> None:
         self.is_recording = False
@@ -462,27 +488,40 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
         self.query_one("#btn-shuffle", Button).disabled = False
 
         target = config.TRAINING_CONFIG["TARGET_SAMPLES"]
-        self.notify(f"Amostra salva automaticamente! ({len(self.recorded_samples)}/{target})", severity="information")
+        self.notify(
+            f"Amostra salva automaticamente! ({len(self.recorded_samples)}/{target})",
+            severity="information",
+        )
 
     def _run_comparison_async(self) -> None:
         def compare():
             try:
                 expected_phrase = config.TRAINING_PHRASES[self.current_phrase_index]
-                transcribed = self.audio_comparator.transcribe_audio(self.last_recording_path)
+                transcribed = self.audio_comparator.transcribe_audio(
+                    self.last_recording_path
+                )
 
                 if not transcribed:
-                    self.call_from_thread(self.notify, "Erro na transcricao!", severity="error")
+                    self.call_from_thread(
+                        self.notify, "Erro na transcricao!", severity="error"
+                    )
                     return
 
-                comparisons, score = self.audio_comparator.compare_texts(expected_phrase, transcribed)
+                comparisons, score = self.audio_comparator.compare_texts(
+                    expected_phrase, transcribed
+                )
                 formatted = self.audio_comparator.format_comparison(comparisons, score)
 
                 phrase_display = self.query_one("#phrase-display", PhraseDisplay)
-                self.call_from_thread(setattr, phrase_display, "comparison_result", formatted)
+                self.call_from_thread(
+                    setattr, phrase_display, "comparison_result", formatted
+                )
 
             except Exception as e:
                 logger.error(f"Comparison error: {e}", exc_info=True)
-                self.call_from_thread(self.notify, f"Erro na comparacao: {e}", severity="error")
+                self.call_from_thread(
+                    self.notify, f"Erro na comparacao: {e}", severity="error"
+                )
 
         thread = threading.Thread(target=compare, daemon=True)
         thread.start()
@@ -509,13 +548,15 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
         counter.recorded = len(self.recorded_samples)
 
         if self.recorded_samples:
-            items = [f"  {i+1}. {Path(s).name}" for i, s in enumerate(self.recorded_samples)]
+            items = [
+                f"  {i + 1}. {Path(s).name}"
+                for i, s in enumerate(self.recorded_samples)
+            ]
             samples_list.update("\n".join(items[-5:]))
             if len(self.recorded_samples) > 5:
                 samples_list.update(f"  ... e mais {len(self.recorded_samples) - 5}")
         else:
             samples_list.update("Nenhuma amostra ainda")
-
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         button_id = event.button.id
@@ -536,7 +577,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                         self.audio_recorder.play_audio(self.last_recording_path)
                     except Exception as e:
                         logger.error(f"Playback error: {e}")
-                        self.call_from_thread(self.notify, f"Erro ao reproduzir: {e}", severity="error")
+                        self.call_from_thread(
+                            self.notify, f"Erro ao reproduzir: {e}", severity="error"
+                        )
 
                 thread = threading.Thread(target=play, daemon=True)
                 thread.start()
@@ -552,7 +595,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
 
         elif button_id == "btn-save-sample":
             if self.last_recording_path and os.path.exists(self.last_recording_path):
-                self.recorded_samples = self.recorded_samples + [self.last_recording_path]
+                self.recorded_samples = self.recorded_samples + [
+                    self.last_recording_path
+                ]
                 self.last_recording_path = None
                 self._update_samples_list()
                 self.action_shuffle_phrase()
@@ -560,7 +605,10 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
                 self.query_one("#btn-discard", Button).disabled = True
                 self.query_one("#btn-save-sample", Button).disabled = True
                 target = config.TRAINING_CONFIG["TARGET_SAMPLES"]
-                self.notify(f"Amostra salva! ({len(self.recorded_samples)}/{target})", severity="information")
+                self.notify(
+                    f"Amostra salva! ({len(self.recorded_samples)}/{target})",
+                    severity="information",
+                )
 
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         button_id = event.pressed.id
@@ -576,7 +624,9 @@ class VoiceTrainerApp(NeurosonancyBaseApp):
 
         self.current_phrase_index = -1
         self.action_shuffle_phrase()
-        self.notify(f"Nivel alterado para: {self.current_level}", severity="information")
+        self.notify(
+            f"Nivel alterado para: {self.current_level}", severity="information"
+        )
 
 
 if __name__ == "__main__":
