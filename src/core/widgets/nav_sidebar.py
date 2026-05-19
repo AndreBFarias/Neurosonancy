@@ -20,6 +20,7 @@ _NAV_ITEMS: list[NavItem] = [
     NavItem("monitor", "Media", "1"),
     NavItem("trainer", "Trainer", "2"),
     NavItem("clone", "Clone Voice", "3"),
+    NavItem("leitor", "Leitor", "4"),
 ]
 
 

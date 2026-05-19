@@ -13,6 +13,7 @@ from src.core.tray_companion import TrayCompanion
 from src.modules.ascii_control.ui.panel import AsciiControlPanel
 from src.modules.voice_trainer.ui.panel import VoiceTrainerPanel
 from src.modules.clone_voice.ui.panel import CloneVoicePanel
+from src.modules.leitor_textos.ui.panel import LeitorTextosPanel
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class NeurosonancyUnifiedApp(App):
         Binding("1", "switch_module('monitor')", "Media", show=True),
         Binding("2", "switch_module('trainer')", "Trainer", show=True),
         Binding("3", "switch_module('clone')", "Clone", show=True),
+        Binding("4", "switch_module('leitor')", "Leitor", show=True),
         Binding("q", "quit", "Sair", show=True),
         Binding("ctrl+t", "toggle_tray", "Tray", show=True),
     ]
@@ -45,7 +47,8 @@ class NeurosonancyUnifiedApp(App):
 
     #panel-monitor,
     #panel-trainer,
-    #panel-clone {
+    #panel-clone,
+    #panel-leitor {
         width: 100%;
         height: 100%;
     }
@@ -66,6 +69,7 @@ class NeurosonancyUnifiedApp(App):
                 yield AsciiControlPanel(id="panel-monitor")
                 yield VoiceTrainerPanel(id="panel-trainer")
                 yield CloneVoicePanel(id="panel-clone")
+                yield LeitorTextosPanel(id="panel-leitor")
         yield Footer()
 
     def on_mount(self) -> None:

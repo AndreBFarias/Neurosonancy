@@ -247,6 +247,13 @@ class CloneVoicePanel(Widget):
         self._refresh_models()
 
     def on_unmount(self) -> None:
+        # Cancela debounce pendente antes que ele dispare em widgets ja desmontados.
+        if self._save_timer:
+            try:
+                self._save_timer.stop()
+            except Exception:
+                pass
+            self._save_timer = None
         if self._config_dirty:
             self._save_current_settings()
 
@@ -289,6 +296,12 @@ class CloneVoicePanel(Widget):
             logger.warning("Erro ao restaurar settings: %s", e)
 
     def _save_current_settings(self, show_feedback: bool = False) -> None:
+        # Durante shutdown / desmonte, os widgets ja podem ter sido removidos
+        # da DOM tree. Skipa silenciosamente nesse caso (NoMatches).
+        from textual.css.query import NoMatches
+
+        if not self.is_mounted:
+            return
         try:
             cfg = {
                 "api_key": self.query_one("#clone-input-api-key", Input).value.strip(),
@@ -313,6 +326,9 @@ class CloneVoicePanel(Widget):
             self._config_dirty = False
             if show_feedback:
                 self._update_save_indicator("Salvo")
+        except NoMatches:
+            # Panel desmontado entre o trigger e o save; benigno.
+            return
         except Exception as e:
             logger.warning("Erro ao salvar settings: %s", e)
 

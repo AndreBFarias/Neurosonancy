@@ -16,8 +16,11 @@ data_input/
 data_output/
 samples/
 datasets/
-models/
 trained_models/
+
+# Modelos TTS/LLM locais: ignora pesos mas versiona estrutura
+models/*/
+!models/.gitkeep
 
 # Documentacao interna (logs e dev)
 docs/logs/
@@ -54,7 +57,7 @@ Thumbs.db
 
 # Documentos internos privados
 IMPORTANT.MD
-CLAUDE.md
+GUIDE.md
 
 # Symlink (aponta para docs/logs)
 logs
@@ -74,7 +77,7 @@ src/modules/clone_voice/core/_deprecated/
 
 # Arquivos externos / gerados / evidencias de IA
 KIMI.md
-CLAUDE.md.backup
+GUIDE.md.backup
 Claude-templates/
 NEUROSONANCY_*.svg
 
@@ -93,3 +96,6 @@ STATE.md
 .aider*
 .continue/
 .github/copilot-instructions.md
+
+# Symlink local para diretrizes (não vai pro repo)
+CLAUDE.md

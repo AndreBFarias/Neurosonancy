@@ -36,6 +36,32 @@ find "$SCRIPT_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || 
 find "$SCRIPT_DIR" -type f -name "*.pyc" -delete 2>/dev/null || true
 
 echo ""
+echo "[OPCIONAL] Dados pesados (preservados por padrao)"
+echo "============================================"
+
+prompt_remove() {
+    local path=$1
+    local label=$2
+    if [ ! -d "$path" ]; then
+        return 0
+    fi
+    local size
+    size=$(du -sh "$path" 2>/dev/null | cut -f1)
+    echo ""
+    echo "[?] Remover $label? ($path, $size)"
+    read -p "    digite 'sim' para confirmar [padrao: nao]: " confirm
+    if [ "$confirm" = "sim" ]; then
+        rm -rf "$path"
+        echo "  -> Removido."
+    else
+        echo "  -> Preservado."
+    fi
+}
+
+prompt_remove "$SCRIPT_DIR/models" "modelos TTS locais (XTTS v2 ~1.8GB)"
+prompt_remove "$SCRIPT_DIR/data_output" "datasets gerados (clone_voice, lore_inteiro, etc)"
+
+echo ""
 echo "[INFO] Removendo entrada do menu..."
 if [ -f "$DESKTOP_FILE" ]; then
     rm -f "$DESKTOP_FILE"
@@ -52,7 +78,10 @@ echo "============================================"
 echo "        DESINSTALACAO CONCLUIDA            "
 echo "============================================"
 echo ""
-echo "Ambientes e entrada do menu removidos."
+echo "Ambientes virtuais e entrada do menu removidos."
 echo "Arquivos fonte preservados."
-echo "Para remover completamente, delete a pasta manualmente."
+echo "Modelos e datasets preservados (a menos que voce confirmou remocao acima)."
+echo ""
+echo "Para remover TUDO definitivamente, delete a pasta manualmente:"
+echo "  rm -rf $SCRIPT_DIR"
 echo ""
