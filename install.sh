@@ -11,8 +11,8 @@ DESKTOP_FILE="$HOME/.local/share/applications/neurosonancy.desktop"
 ICON_PATH="$SCRIPT_DIR/assets/icon.png"
 
 echo "============================================"
-echo "    NEUROSONANCY // INSTALLER v4.0         "
-echo "    Voice Cloning & Training Toolkit       "
+echo "    NEUROSONANCY // INSTALLER v4.1         "
+echo "    Voice Cloning + Leitor (offline-first)"
 echo "============================================"
 echo ""
 
@@ -23,6 +23,18 @@ fi
 
 PYTHON_VERSION=$($PYTHON_CMD -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 echo "[INFO] Python version: $PYTHON_VERSION"
+
+if ! command -v ffmpeg &> /dev/null || ! command -v ffprobe &> /dev/null; then
+    echo "[ERRO] ffmpeg/ffprobe necessarios (concat de audio + leitura de duracao)."
+    echo "       Instale com: sudo apt install ffmpeg"
+    exit 1
+fi
+
+if ! command -v kitty &> /dev/null; then
+    echo "[AVISO] 'kitty' nao encontrado (scripts/launch.sh usa kitty por padrao)."
+    echo "        Voce ainda pode rodar 'venv/bin/python main.py' direto em qualquer terminal."
+    echo "        Para instalar: sudo apt install kitty"
+fi
 
 check_venv() {
     local venv_path=$1
@@ -109,9 +121,24 @@ echo "  -> Coqui TTS instalado!"
 mkdir -p "$SCRIPT_DIR/logs"
 mkdir -p "$SCRIPT_DIR/data_input"
 mkdir -p "$SCRIPT_DIR/data_output"
+mkdir -p "$SCRIPT_DIR/models/coqui"
 
 echo ""
-echo "[FASE 4/4] Registrando Aplicativo"
+echo "[FASE 4/5] Modelos TTS Locais (~1.8 GB)"
+echo "============================================"
+if [ -f "$SCRIPT_DIR/models/coqui/tts_models--multilingual--multi-dataset--xtts_v2/model.pth" ]; then
+    echo "[OK] XTTS v2 ja presente em models/coqui/."
+else
+    echo "[INFO] Baixando XTTS v2 para models/coqui/ (offline-first)..."
+    if ! bash "$SCRIPT_DIR/scripts/download_models.sh"; then
+        echo "[ERRO] Falha ao baixar modelos. O Leitor de Textos nao funcionara."
+        echo "       Rode manualmente: bash scripts/download_models.sh"
+        # nao aborta a instalacao — usuario pode preferir baixar depois
+    fi
+fi
+
+echo ""
+echo "[FASE 5/5] Registrando Aplicativo"
 echo "============================================"
 
 mkdir -p "$HOME/.local/share/applications"
@@ -134,11 +161,17 @@ echo "        INSTALACAO CONCLUIDA               "
 echo "============================================"
 echo ""
 echo "Ambientes:"
-echo "  - venv/            : Interface principal + ElevenLabs"
-echo "  - venv_chatterbox/ : Treinamento Chatterbox TTS"
-echo "  - venv_coqui/      : Treinamento Coqui XTTS"
+echo "  - venv/            : Interface principal (ElevenLabs apenas para clonagem)"
+echo "  - venv_chatterbox/ : Chatterbox TTS (offline)"
+echo "  - venv_coqui/      : Coqui XTTS v2 (offline; usado pelo Leitor de Textos)"
+echo ""
+echo "Modelos:"
+echo "  - models/coqui/    : XTTS v2 base (~1.8 GB; baixe via 'make download-models' se faltar)"
 echo ""
 echo "Para executar:"
 echo "  1. Busque 'Neurosonancy' no menu de aplicativos"
-echo "  2. Ou execute: cd $SCRIPT_DIR && source venv/bin/activate && python3 main.py"
+echo "  2. Ou execute: cd $SCRIPT_DIR && ./run.sh        (valida + lanca inline)"
+echo "  3. Ou: make run                                  (mesmo que ./run.sh)"
+echo "  4. Validar ambiente sem subir o app: ./run.sh --check"
+echo "  5. Atalhos da TUI: [1] Media | [2] Trainer | [3] Clone | [4] Leitor"
 echo ""
