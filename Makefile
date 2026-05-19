@@ -1,7 +1,7 @@
 .PHONY: install uninstall run download-models trim-references tts-start tts-stop tts-status tts-start-all tts-stop-all sync-voices validate-voices sync package-release clean help
 
 LUNA_PATH ?= ../Luna
-VERSION ?= v1.0.0
+VERSION ?= v2.1.0
 ENGINE ?= coqui
 
 help:
