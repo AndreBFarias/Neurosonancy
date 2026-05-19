@@ -31,7 +31,7 @@ from textual.widgets import (
     TextArea,
 )
 
-from src.core.audio_utils import AudioUtilsError, concat_wavs_to_mp3
+from src.core.audio_utils import AudioUtilsError, concat_wavs_to_mp3, get_audio_duration
 from src.core.coqui_runner import (
     ChunkResult,
     CoquiRunnerError,
@@ -273,6 +273,13 @@ class LeitorTextosPanel(Widget):
         self._gen_speed: float = 1.0
         self._gen_engine: str = "coqui"
         self._gen_device: str = "?"
+        # Estado pra auto-scroll seguir o playback (não apenas a geração).
+        # Populado durante geração; consumido por _on_playback_tick.
+        self._chunk_texts: list[str] = []
+        self._chunk_durations: list[float] = []
+        self._playback_start_ts: float = 0.0
+        self._playback_timer = None  # handle do set_interval
+        self._playback_current_chunk_idx: int = -1
         try:
             self._catalog: list[VoiceProfile] = load_catalog()
         except VoiceCatalogError as exc:
@@ -632,6 +639,10 @@ class LeitorTextosPanel(Widget):
         self._gen_start_ts = _time.time()
         self._gen_speed = speed
         self._gen_engine = engine
+        # Reseta mapeamento chunk→texto/duração antes da nova geração.
+        self._chunk_texts = []
+        self._chunk_durations = []
+        self._playback_current_chunk_idx = -1
 
         # Resetar flag DEPOIS do guard de thread vivo, pra evitar TOCTOU
         # com worker antigo que ainda esteja checando o sinal.
@@ -662,15 +673,61 @@ class LeitorTextosPanel(Widget):
         if self._last_output is None or not self._last_output.is_file():
             self._set_status("Sem áudio gerado ainda.", error=True)
             return
+        import time as _time
+
         try:
             self._player.play(self._last_output)
+            self._playback_start_ts = _time.monotonic()
+            self._playback_current_chunk_idx = -1
+            # Só ativa o tracking se temos durações de chunk (i.e. acabou de gerar).
+            # Quando o usuário toca um MP3 antigo sem ter rodado a geração na sessão,
+            # os arrays estão vazios e o playback é "burro" como antes.
+            if self._chunk_durations and self._chunk_texts:
+                self._playback_timer = self.set_interval(
+                    0.5, self._on_playback_tick
+                )
             self._set_status(f"Tocando: {self._last_output.name}")
         except PlaybackError as exc:
             self._set_status(f"Playback: {exc}", error=True)
 
     def _action_stop_audio(self) -> None:
         self._player.stop()
+        self._stop_playback_timer()
         self._set_status("Áudio parado.")
+
+    def _stop_playback_timer(self) -> None:
+        if self._playback_timer is not None:
+            try:
+                self._playback_timer.stop()
+            except Exception:  # noqa: BLE001
+                pass
+            self._playback_timer = None
+
+    def _on_playback_tick(self) -> None:
+        import time as _time
+
+        if not self._player.is_playing():
+            self._stop_playback_timer()
+            return
+
+        elapsed = _time.monotonic() - self._playback_start_ts
+
+        cumulative = 0.0
+        chunk_idx = -1
+        for i, dur in enumerate(self._chunk_durations):
+            cumulative += dur
+            if elapsed < cumulative:
+                chunk_idx = i
+                break
+
+        if chunk_idx < 0 or chunk_idx == self._playback_current_chunk_idx:
+            return
+
+        self._playback_current_chunk_idx = chunk_idx
+        if chunk_idx < len(self._chunk_texts):
+            chunk_text = self._chunk_texts[chunk_idx]
+            if chunk_text:
+                self._try_scroll_to_chunk(chunk_text)
 
     # ------------------------------------------------------------------
     # Worker (thread)
@@ -697,8 +754,8 @@ class LeitorTextosPanel(Widget):
                 on_chunk_start=lambda i, t, c: self.app.call_from_thread(
                     self._on_chunk_start, i, t, c
                 ),
-                on_chunk_done=lambda i, t, _p: self.app.call_from_thread(
-                    self._on_chunk_done, i, t
+                on_chunk_done=lambda i, t, p: self.app.call_from_thread(
+                    self._on_chunk_done, i, t, get_audio_duration(p)
                 ),
                 should_stop=lambda: self._should_stop_gen,
             )
@@ -741,6 +798,11 @@ class LeitorTextosPanel(Widget):
     def _on_chunk_start(self, idx: int, total: int, chunk_text: str = "") -> None:
         self.chunk_total = total
         self._set_status(f"Sintetizando chunk {idx}/{total}...")
+        # Guarda o texto do chunk indexado por idx-1. _on_playback_tick consulta
+        # essa lista pra saber qual trecho destacar enquanto o áudio toca.
+        while len(self._chunk_texts) < idx:
+            self._chunk_texts.append("")
+        self._chunk_texts[idx - 1] = chunk_text
         # Auto-scroll: localiza o chunk no TextArea exibido e move o cursor pra lá.
         # Fuzzy match com os primeiros ~40 chars (case + espaços normalizados).
         if chunk_text and self._displayed_text:
@@ -779,9 +841,13 @@ class LeitorTextosPanel(Widget):
         except Exception as exc:  # noqa: BLE001
             logger.debug("Falha no auto-scroll do TextArea: %s", exc)
 
-    def _on_chunk_done(self, idx: int, total: int) -> None:
+    def _on_chunk_done(self, idx: int, total: int, duration: float = 0.0) -> None:
         self.chunk_done = idx
         self._set_progress(idx, total)
+        # Armazena duração medida (ffprobe rodou no thread do worker, não bloqueia UI).
+        while len(self._chunk_durations) < idx:
+            self._chunk_durations.append(0.0)
+        self._chunk_durations[idx - 1] = duration
 
     def _on_generation_done(self, final_mp3: Path) -> None:
         import time as _time
@@ -800,6 +866,10 @@ class LeitorTextosPanel(Widget):
 
     def _on_generation_stopped(self, chunks_dir: Path) -> None:
         self.is_generating = False
+        # Geração interrompida: chunks_durations/texts incompletos não servem
+        # pra acompanhar playback. Zera pra evitar tracking incorreto.
+        self._chunk_texts = []
+        self._chunk_durations = []
         # WAVs intermediários sem concat não servem ao usuário; limpa pra evitar
         # acumular dezenas de MB a cada cancelamento.
         cleaned = 0
@@ -814,6 +884,8 @@ class LeitorTextosPanel(Widget):
 
     def _on_generation_failed(self, message: str) -> None:
         self.is_generating = False
+        self._chunk_texts = []
+        self._chunk_durations = []
         self._set_status(f"Falha: {message}", error=True)
 
     # ------------------------------------------------------------------
