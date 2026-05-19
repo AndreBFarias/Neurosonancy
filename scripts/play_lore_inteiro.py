@@ -27,7 +27,7 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).parent.parent.resolve()
 load_dotenv(ROOT / ".env")
 
-LORE_FILE = ROOT / "LORE_INTEIRO.md"
+LORE_FILE = ROOT / "data_input" / "lore" / "LORE_INTEIRO.md"
 OUTPUT_DIR = ROOT / "data_output" / "lore_inteiro"
 
 VOICE_ID = "FXrW2eDeVmtaCkzUWW7X"
